@@ -30,7 +30,8 @@
     <service android:name="com.google.android.enterprise.connectedapps.testapp.connector.TestProfileConnector_Service" android:exported="false" />
   </application>
 
-  <instrumentation android:name="com.google.android.apps.common.testing.testrunner.Google3InstrumentationTestRunner"
+  <!-- TODO(179354604): this needs to be changed upstream -->
+  <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
       android:targetPackage="com.google.android.enterprise.connectedapps"
       android:label="Connected Apps SDK test"/>
 </manifest>
