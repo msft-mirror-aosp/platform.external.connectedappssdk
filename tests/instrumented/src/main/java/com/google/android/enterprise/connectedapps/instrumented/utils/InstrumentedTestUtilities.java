@@ -44,54 +44,73 @@ public class InstrumentedTestUtilities {
   private final ProfileConnector connector;
   private final Context context;
   private final com.google.android.enterprise.connectedapps.testing.InstrumentedTestUtilities
-      instrumentedTestUtilities;
+          instrumentedTestUtilities;
 
+  private static final int S_REQUEST_QUIET_MODE_ENABLED_ID = 73;
   private static final int R_REQUEST_QUIET_MODE_ENABLED_ID = 72;
   private static final int REQUEST_QUIET_MODE_ENABLED_ID = 58;
 
   private static final String USER_ID_KEY = "USER_ID";
   private static final Parameter USER_ID_PARAMETER = new Parameter(USER_ID_KEY);
 
+  private static final ServiceCall S_TURN_OFF_WORK_PROFILE_COMMAND =
+          new ServiceCall("user", S_REQUEST_QUIET_MODE_ENABLED_ID)
+                  .setUser(1000) // user 1000 has packageName "android"
+                  .addStringParam("android") // callingPackage
+                  .addBooleanParam(true) // enableQuietMode
+                  .addIntParam(USER_ID_PARAMETER) // userId
+                  .addIntParam(0) // target
+                  .addIntParam(0); // flags
+
   private static final ServiceCall R_TURN_OFF_WORK_PROFILE_COMMAND =
-      new ServiceCall("user", R_REQUEST_QUIET_MODE_ENABLED_ID)
-          .setUser(1000) // user 1000 has packageName "android"
-          .addStringParam("android") // callingPackage
-          .addBooleanParam(true) // enableQuietMode
-          .addIntParam(USER_ID_PARAMETER) // userId
-          .addIntParam(0) // target
-          .addIntParam(0); // flags
+          new ServiceCall("user", R_REQUEST_QUIET_MODE_ENABLED_ID)
+                  .setUser(1000) // user 1000 has packageName "android"
+                  .addStringParam("android") // callingPackage
+                  .addBooleanParam(true) // enableQuietMode
+                  .addIntParam(USER_ID_PARAMETER) // userId
+                  .addIntParam(0) // target
+                  .addIntParam(0); // flags
 
   private static final ServiceCall TURN_OFF_WORK_PROFILE_COMMAND =
-      new ServiceCall("user", REQUEST_QUIET_MODE_ENABLED_ID)
-          .setUser(1000) // user 1000 has packageName "android"
-          .addStringParam("android") // callingPackage
-          .addBooleanParam(true) // enableQuietMode
-          .addIntParam(USER_ID_PARAMETER) // userId
-          .addIntParam(0); // target
+          new ServiceCall("user", REQUEST_QUIET_MODE_ENABLED_ID)
+                  .setUser(1000) // user 1000 has packageName "android"
+                  .addStringParam("android") // callingPackage
+                  .addBooleanParam(true) // enableQuietMode
+                  .addIntParam(USER_ID_PARAMETER) // userId
+                  .addIntParam(0); // target
+
+  private static final ServiceCall S_TURN_ON_WORK_PROFILE_COMMAND =
+          new ServiceCall("user", S_REQUEST_QUIET_MODE_ENABLED_ID)
+                  .setUser(1000) // user 1000 has packageName "android"
+                  .addStringParam("android") // callingPackage
+                  .addBooleanParam(false) // enableQuietMode
+                  .addIntParam(USER_ID_PARAMETER) // userId
+                  .addIntParam(0) // target
+                  .addIntParam(0); // flags
 
   private static final ServiceCall R_TURN_ON_WORK_PROFILE_COMMAND =
-      new ServiceCall("user", R_REQUEST_QUIET_MODE_ENABLED_ID)
-          .setUser(1000) // user 1000 has packageName "android"
-          .addStringParam("android") // callingPackage
-          .addBooleanParam(false) // enableQuietMode
-          .addIntParam(USER_ID_PARAMETER) // userId
-          .addIntParam(0) // target
-          .addIntParam(0); // flags
+          new ServiceCall("user", R_REQUEST_QUIET_MODE_ENABLED_ID)
+                  .setUser(1000) // user 1000 has packageName "android"
+                  .addStringParam("android") // callingPackage
+                  .addBooleanParam(false) // enableQuietMode
+                  .addIntParam(USER_ID_PARAMETER) // userId
+                  .addIntParam(0) // target
+                  .addIntParam(0); // flags
 
   private static final ServiceCall TURN_ON_WORK_PROFILE_COMMAND =
-      new ServiceCall("user", REQUEST_QUIET_MODE_ENABLED_ID)
-          .setUser(1000) // user 1000 has packageName "android"
-          .addStringParam("android") // callingPackage
-          .addBooleanParam(false) // enableQuietMode
-          .addIntParam(USER_ID_PARAMETER) // userId
-          .addIntParam(0); // target
+          new ServiceCall("user", REQUEST_QUIET_MODE_ENABLED_ID)
+                  .setUser(1000) // user 1000 has packageName "android"
+                  .addStringParam("android") // callingPackage
+                  .addBooleanParam(false) // enableQuietMode
+                  .addIntParam(USER_ID_PARAMETER) // userId
+                  .addIntParam(0); // target
 
   public InstrumentedTestUtilities(Context context, ProfileConnector connector) {
     this.context = context;
     this.connector = connector;
     this.instrumentedTestUtilities =
-        new com.google.android.enterprise.connectedapps.testing.InstrumentedTestUtilities(
-            context, connector);
+            new com.google.android.enterprise.connectedapps.testing.InstrumentedTestUtilities(
+                    context, connector);
   }
 
   /**
@@ -137,7 +156,7 @@ public class InstrumentedTestUtilities {
 
   public void installInUser(int userId) {
     runCommandWithOutput(
-        "cmd package install-existing --user " + userId + " " + context.getPackageName());
+            "cmd package install-existing --user " + userId + " " + context.getPackageName());
   }
 
   /**
@@ -148,7 +167,7 @@ public class InstrumentedTestUtilities {
   public void grantInteractAcrossUsers() {
     // TODO(scottjonathan): Support INTERACT_ACROSS_PROFILES in these tests.
     runCommandWithOutput(
-        "pm grant " + context.getPackageName() + " android.permission.INTERACT_ACROSS_USERS");
+            "pm grant " + context.getPackageName() + " android.permission.INTERACT_ACROSS_USERS");
   }
 
   /**
@@ -171,12 +190,15 @@ public class InstrumentedTestUtilities {
         return;
       }
 
+
+      runCommandWithOutput("pm remove-user " + getWorkProfileUserId());
+
       // TODO(162219825): Try to remove the package
 
-      throw new IllegalStateException(
-          "There is already a work profile on the device with user id "
-              + getWorkProfileUserId()
-              + ".");
+//      throw new IllegalStateException(
+//              "There is already a work profile on the device with user id "
+//                      + getWorkProfileUserId()
+//                      + ".");
     }
     runCommandWithOutput("pm create-user --profileOf 0 --managed TestProfile123");
     int workProfileUserId = getWorkProfileUserId();
@@ -186,7 +208,7 @@ public class InstrumentedTestUtilities {
   private static boolean userHasPackageInstalled(int userId, String packageName) {
     String expectedPackageLine = "package:" + packageName;
     String[] installedPackages =
-        runCommandWithOutput("pm list packages --user " + userId).split("\n");
+            runCommandWithOutput("pm list packages --user " + userId).split("\n");
     for (String installedPackage : installedPackages) {
       if (installedPackage.equals(expectedPackageLine)) {
         return true;
@@ -227,18 +249,24 @@ public class InstrumentedTestUtilities {
    * @see #turnOffWorkProfileAndWait()
    */
   public void turnOffWorkProfile() {
-    if (VERSION.SDK_INT == VERSION_CODES.R) {
+    if (VERSION.CODENAME.equals("S")) {
       runCommandWithOutput(
-          R_TURN_OFF_WORK_PROFILE_COMMAND
-              .prepare()
-              .setInt(USER_ID_KEY, getWorkProfileUserId())
-              .getCommand());
+              S_TURN_OFF_WORK_PROFILE_COMMAND
+                      .prepare()
+                      .setInt(USER_ID_KEY, getWorkProfileUserId())
+                      .getCommand());
+    } else if (VERSION.SDK_INT == VERSION_CODES.R) {
+      runCommandWithOutput(
+              R_TURN_OFF_WORK_PROFILE_COMMAND
+                      .prepare()
+                      .setInt(USER_ID_KEY, getWorkProfileUserId())
+                      .getCommand());
     } else if (VERSION.SDK_INT == VERSION_CODES.Q || VERSION.SDK_INT == VERSION_CODES.P) {
       runCommandWithOutput(
-          TURN_OFF_WORK_PROFILE_COMMAND
-              .prepare()
-              .setInt(USER_ID_KEY, getWorkProfileUserId())
-              .getCommand());
+              TURN_OFF_WORK_PROFILE_COMMAND
+                      .prepare()
+                      .setInt(USER_ID_KEY, getWorkProfileUserId())
+                      .getCommand());
     } else {
       throw new IllegalStateException("Cannot turn off work on this version of android");
     }
@@ -259,7 +287,7 @@ public class InstrumentedTestUtilities {
     turnOnWorkProfile();
 
     ProfileAvailabilityPoll.blockUntilProfileRunningAndUnlocked(
-        context, getWorkProfileUserHandle());
+            context, getWorkProfileUserHandle());
   }
 
   // TODO(160147511): Remove use of service calls for versions after R
@@ -271,18 +299,24 @@ public class InstrumentedTestUtilities {
    * @see #turnOnWorkProfileAndWait()
    */
   public void turnOnWorkProfile() {
-    if (VERSION.SDK_INT == VERSION_CODES.R) {
+    if (VERSION.CODENAME.equals("S")) {
       runCommandWithOutput(
-          R_TURN_ON_WORK_PROFILE_COMMAND
-              .prepare()
-              .setInt(USER_ID_KEY, getWorkProfileUserId())
-              .getCommand());
+              S_TURN_ON_WORK_PROFILE_COMMAND
+                      .prepare()
+                      .setInt(USER_ID_KEY, getWorkProfileUserId())
+                      .getCommand());
+    } else if (VERSION.SDK_INT == VERSION_CODES.R) {
+      runCommandWithOutput(
+              R_TURN_ON_WORK_PROFILE_COMMAND
+                      .prepare()
+                      .setInt(USER_ID_KEY, getWorkProfileUserId())
+                      .getCommand());
     } else if (VERSION.SDK_INT == VERSION_CODES.Q || VERSION.SDK_INT == VERSION_CODES.P) {
       runCommandWithOutput(
-          TURN_ON_WORK_PROFILE_COMMAND
-              .prepare()
-              .setInt(USER_ID_KEY, getWorkProfileUserId())
-              .getCommand());
+              TURN_ON_WORK_PROFILE_COMMAND
+                      .prepare()
+                      .setInt(USER_ID_KEY, getWorkProfileUserId())
+                      .getCommand());
     } else {
       throw new IllegalStateException("Cannot turn on work on this version of android");
     }
@@ -314,7 +348,7 @@ public class InstrumentedTestUtilities {
   }
 
   private static final Pattern CREATE_USER_PATTERN =
-      Pattern.compile("Success: created user id (\\d+)");
+          Pattern.compile("Success: created user id (\\d+)");
 
   public int createUser(String username) {
     String output = runCommandWithOutput("pm create-user " + username);
@@ -334,6 +368,7 @@ public class InstrumentedTestUtilities {
   }
 
   private static String runCommandWithOutput(String command) {
+    // TODO: Log output so we can see why it's failing
     ParcelFileDescriptor p = runCommand(command);
 
     InputStream inputStream = new FileInputStream(p.getFileDescriptor());
@@ -347,7 +382,7 @@ public class InstrumentedTestUtilities {
 
   private static ParcelFileDescriptor runCommand(String command) {
     return InstrumentationRegistry.getInstrumentation()
-        .getUiAutomation()
-        .executeShellCommand(command);
+            .getUiAutomation()
+            .executeShellCommand(command);
   }
 }
