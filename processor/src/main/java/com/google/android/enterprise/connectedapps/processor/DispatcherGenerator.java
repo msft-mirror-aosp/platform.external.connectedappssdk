@@ -92,7 +92,6 @@ final class DispatcherGenerator {
             .initializer("new $T()", PARCEL_CALL_RECEIVER_CLASSNAME)
             .build());
 
-    addEnsureValidCallerMethod(classBuilder);
     addCallMethod(classBuilder);
     addPrepareCallMethod(classBuilder);
     addFetchResponseMethod(classBuilder);
@@ -109,7 +108,6 @@ final class DispatcherGenerator {
             .addParameter(int.class, "blockId")
             .addParameter(int.class, "numBytes")
             .addParameter(ArrayTypeName.of(byte.class), "paramBytes")
-            .addStatement("ensureValidCaller(context)")
             .addStatement("parcelCallReceiver.prepareCall(callId, blockId, numBytes, paramBytes)")
             .addJavadoc(
                 "Store a block of bytes to be part of a future call to\n"
@@ -142,7 +140,6 @@ final class DispatcherGenerator {
             .addParameter(long.class, "callId")
             .addParameter(int.class, "blockId")
             .returns(ArrayTypeName.of(byte.class))
-            .addStatement("ensureValidCaller(context)")
             .addStatement("return parcelCallReceiver.getPreparedResponse(callId, blockId)")
             .addJavadoc(
                 "Fetch a response block if a previous call to\n {@link #call(Context, long, int,"
@@ -157,40 +154,10 @@ final class DispatcherGenerator {
     classBuilder.addMethod(prepareCallMethod);
   }
 
-  private static void addEnsureValidCallerMethod(TypeSpec.Builder classBuilder) {
-    CodeBlock.Builder methodCode = CodeBlock.builder();
-
-    methodCode.addStatement(
-        "$T[] callingPackageNames ="
-            + " context.getPackageManager().getPackagesForUid($T.getCallingUid())",
-        String.class,
-        BINDER_CLASSNAME);
-    methodCode.beginControlFlow("for (String callingPackageName : callingPackageNames)");
-    methodCode.beginControlFlow("if (context.getPackageName().equals(callingPackageName))");
-    methodCode.addStatement("return");
-    methodCode.endControlFlow();
-    methodCode.endControlFlow();
-
-    methodCode.addStatement(
-        "throw new $T(\"Cross-profile functionality is only available within the same package\")",
-        IllegalStateException.class);
-
-    MethodSpec ensureValidCallerMethod =
-        MethodSpec.methodBuilder("ensureValidCaller")
-            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-            .addParameter(CONTEXT_CLASSNAME, "context")
-            .addCode(methodCode.build())
-            .build();
-
-    classBuilder.addMethod(ensureValidCallerMethod);
-  }
-
   private void addCallMethod(TypeSpec.Builder classBuilder) {
     CodeBlock.Builder methodCode = CodeBlock.builder();
 
     methodCode.beginControlFlow("try");
-
-    methodCode.addStatement("ensureValidCaller(context)");
 
     methodCode.addStatement(
         "$1T parcel = parcelCallReceiver.getPreparedCall(callId, blockId, paramBytes)",
