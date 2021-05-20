@@ -26,6 +26,9 @@ import com.google.android.enterprise.connectedapps.testapp.connector.TestProfile
 import com.google.android.enterprise.connectedapps.testapp.types.ProfileTestCrossProfileTypeWhichNeedsContext;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,8 +42,8 @@ public class BothProfilesTest {
 
   private static final Application context = ApplicationProvider.getApplicationContext();
 
-  private final TestProfileConnector connector = TestProfileConnector.create(context);
-  private final InstrumentedTestUtilities utilities =
+  private static final TestProfileConnector connector = TestProfileConnector.create(context);
+  private static final InstrumentedTestUtilities utilities =
       new InstrumentedTestUtilities(context, connector);
 
   private final ProfileTestCrossProfileTypeWhichNeedsContext type =
@@ -49,6 +52,11 @@ public class BothProfilesTest {
   @Before
   public void setup() {
     utilities.ensureReadyForCrossProfileCalls();
+  }
+
+  @AfterClass
+  public static void teardown() {
+    utilities.ensureNoWorkProfile();
   }
 
   /** This test could not be covered by Robolectric. */

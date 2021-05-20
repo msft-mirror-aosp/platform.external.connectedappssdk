@@ -23,6 +23,9 @@ import androidx.test.core.app.ApplicationProvider;
 import com.google.android.enterprise.connectedapps.exceptions.UnavailableProfileException;
 import com.google.android.enterprise.connectedapps.instrumented.utils.InstrumentedTestUtilities;
 import com.google.android.enterprise.connectedapps.testapp.connector.TestProfileConnector;
+
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,13 +43,24 @@ import org.junit.runners.JUnit4;
 public class ConnectTest {
   private static final Application context = ApplicationProvider.getApplicationContext();
 
-  private final TestProfileConnector connector = TestProfileConnector.create(context);
-  private final InstrumentedTestUtilities utilities =
+  private static final TestProfileConnector connector = TestProfileConnector.create(context);
+  private static final InstrumentedTestUtilities utilities =
       new InstrumentedTestUtilities(context, connector);
 
   @Before
   public void setup() {
     utilities.ensureReadyForCrossProfileCalls();
+  }
+
+  @After
+  public void teardown() {
+    connector.stopManualConnectionManagement();
+    utilities.waitForDisconnected();
+  }
+
+  @AfterClass
+  public static void teardownClass() {
+    utilities.ensureNoWorkProfile();
   }
 
   @Test
