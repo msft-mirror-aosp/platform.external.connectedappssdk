@@ -22,6 +22,8 @@ import androidx.test.core.app.ApplicationProvider;
 import com.google.android.enterprise.connectedapps.AvailabilityListener;
 import com.google.android.enterprise.connectedapps.testapp.connector.TestProfileConnector;
 import com.google.android.enterprise.connectedapps.testing.InstrumentedTestUtilities;
+
+import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -32,9 +34,14 @@ public class InstrumentedTestUtilitiesTest {
 
   private static final Application context = ApplicationProvider.getApplicationContext();
 
-  private final TestProfileConnector connector = TestProfileConnector.create(context);
-  private final InstrumentedTestUtilities utilities =
+  private static final TestProfileConnector connector = TestProfileConnector.create(context);
+  private static final InstrumentedTestUtilities utilities =
       new InstrumentedTestUtilities(context, connector);
+
+  @AfterClass
+  public static void teardown() {
+    utilities.ensureNoWorkProfile();
+  }
 
   @Test
   public void isAvailable_ensureReadyForCrossProfileCalls_isTrue() {
