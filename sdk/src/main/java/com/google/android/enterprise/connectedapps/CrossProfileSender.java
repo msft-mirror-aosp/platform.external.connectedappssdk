@@ -18,9 +18,6 @@ package com.google.android.enterprise.connectedapps;
 import static com.google.android.enterprise.connectedapps.CrossProfileSDKUtilities.filterUsersByAvailabilityRestrictions;
 import static com.google.android.enterprise.connectedapps.CrossProfileSDKUtilities.selectUserHandleToBind;
 
-import static java.util.Collections.newSetFromMap;
-import static java.util.Collections.synchronizedSet;
-
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -30,7 +27,6 @@ import android.content.ServiceConnection;
 import android.content.pm.CrossProfileApps;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Parcel;
@@ -45,13 +41,8 @@ import com.google.android.enterprise.connectedapps.internal.CrossProfileParcelCa
 import com.google.android.enterprise.connectedapps.internal.ParcelCallReceiver;
 import com.google.android.enterprise.connectedapps.internal.ParcelUtilities;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
@@ -247,11 +238,6 @@ public class CrossProfileSender {
   @Nullable private volatile ScheduledFuture<Void> automaticDisconnectionFuture;
   private final AvailabilityRestrictions availabilityRestrictions;
 
-  // This is synchronized which isn't massively performant but it only gets accessed once straight
-  // after creating a Sender, and once each time availability changes
-  private static final Set<CrossProfileSender> senders =
-          synchronizedSet(newSetFromMap(new WeakHashMap<>()));
-
   private boolean isManuallyManagingConnection = false;
   private ConcurrentLinkedDeque<OngoingCrossProfileCall> ongoingCrossProfileCalls =
       new ConcurrentLinkedDeque<>();
@@ -291,18 +277,13 @@ public class CrossProfileSender {
     canUseReflectedApis = ReflectionUtilities.canUseReflectedApis();
     this.scheduledExecutorService = scheduledExecutorService;
     this.availabilityRestrictions = availabilityRestrictions;
-
-    senders.add(this);
-    beginMonitoringAvailabilityChanges();
   }
 
-  private static final BroadcastReceiver profileAvailabilityReceiver =
+  private final BroadcastReceiver profileAvailabilityReceiver =
       new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-          for (CrossProfileSender sender : senders) {
-            sender.scheduledExecutorService.execute(sender::checkAvailability);
-          }
+          checkAvailability();
         }
       };
 
@@ -389,13 +370,7 @@ public class CrossProfileSender {
     return null;
   }
 
-  private static final AtomicBoolean isMonitoringAvailabilityChanges = new AtomicBoolean(false);
-
-  private void beginMonitoringAvailabilityChanges() {
-    if (isMonitoringAvailabilityChanges.getAndSet(true)) {
-      return;
-    }
-
+  void beginMonitoringAvailabilityChanges() {
     IntentFilter filter = new IntentFilter();
     filter.addAction(Intent.ACTION_MANAGED_PROFILE_UNLOCKED);
     filter.addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE);
@@ -618,17 +593,10 @@ public class CrossProfileSender {
    * @throws UnavailableProfileException if a connection is not already established
    */
   public Parcel call(long crossProfileTypeIdentifier, int methodIdentifier, Parcel params)
-          throws UnavailableProfileException {
+      throws UnavailableProfileException {
     try {
       return callWithExceptions(crossProfileTypeIdentifier, methodIdentifier, params);
-    } catch (UnavailableProfileException | RuntimeException | Error e) {
-      StackTraceElement[] remoteStack = e.getStackTrace();
-      StackTraceElement[] localStack = Thread.currentThread().getStackTrace();
-      StackTraceElement[] totalStack =
-              Arrays.copyOf(remoteStack, remoteStack.length + localStack.length - 1);
-      // We cut off the first element of localStack as it is just getting the stack trace
-      System.arraycopy(localStack, 1, totalStack, remoteStack.length, localStack.length - 1);
-      e.setStackTrace(totalStack);
+    } catch (UnavailableProfileException | RuntimeException e) {
       throw e;
     } catch (Throwable e) {
       throw new UnavailableProfileException("Unexpected checked exception", e);
