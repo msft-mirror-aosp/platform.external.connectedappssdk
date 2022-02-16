@@ -215,8 +215,6 @@ final class FakeOtherGenerator {
     methodBuilder.addStatement(methodCall);
     methodBuilder.nextControlFlow("catch ($T e)", RuntimeException.class);
     methodBuilder.addStatement("throw new $T(e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
-    methodBuilder.nextControlFlow("catch ($T e)", Error.class);
-    methodBuilder.addStatement("throw new $T(e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
     methodBuilder.endControlFlow();
     classBuilder.addMethod(methodBuilder.build());
   }
@@ -268,8 +266,6 @@ final class FakeOtherGenerator {
     methodBuilder.beginControlFlow("try");
     methodBuilder.addStatement(methodCall);
     methodBuilder.nextControlFlow("catch ($T e)", RuntimeException.class);
-    methodBuilder.addStatement("throw new $T(e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
-    methodBuilder.nextControlFlow("catch ($T e)", Error.class);
     methodBuilder.addStatement("throw new $T(e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
     methodBuilder.endControlFlow();
 
@@ -335,8 +331,6 @@ final class FakeOtherGenerator {
       methodBuilder.addStatement("return returnValue");
     }
     methodBuilder.nextControlFlow("catch ($T e)", RuntimeException.class);
-    methodBuilder.addStatement("throw new $T(e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
-    methodBuilder.nextControlFlow("catch ($T e)", Error.class);
     methodBuilder.addStatement("throw new $T(e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
     methodBuilder.endControlFlow();
 
