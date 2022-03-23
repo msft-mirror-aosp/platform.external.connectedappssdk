@@ -95,25 +95,18 @@ public class TypeUtils {
   private static CodeBlock generateArrayBundlerType(TypeMirror type) {
     TypeMirror arrayType = extractTypeFromArray(type);
 
-    if (arrayType.getKind().isPrimitive()) {
-      return CodeBlock.of(
-              "$T.of($S)",
-              BUNDLER_TYPE_CLASSNAME,
-              arrayType.toString() + "[]");
-    }
-
     return CodeBlock.of(
-            "$T.of($S, $L)",
-            BUNDLER_TYPE_CLASSNAME,
-            "java.lang.Object[]",
-            generateBundlerType(arrayType));
+        "$T.of($S, $L)",
+        BUNDLER_TYPE_CLASSNAME,
+        "java.lang.Object[]",
+        generateBundlerType(arrayType));
   }
 
   private static CodeBlock generateGenericBundlerType(TypeMirror type) {
     CodeBlock.Builder typeArgs = CodeBlock.builder();
 
     List<CodeBlock> typeArgBlocks =
-            extractTypeArguments(type).stream().map(TypeUtils::generateBundlerType).collect(toList());
+        extractTypeArguments(type).stream().map(TypeUtils::generateBundlerType).collect(toList());
 
     typeArgs.add(typeArgBlocks.get(0));
     for (CodeBlock typeArgBlock : typeArgBlocks.subList(1, typeArgBlocks.size())) {
@@ -121,7 +114,7 @@ public class TypeUtils {
     }
 
     return CodeBlock.of(
-            "$T.of($S, $L)", BUNDLER_TYPE_CLASSNAME, getRawTypeQualifiedName(type), typeArgs.build());
+        "$T.of($S, $L)", BUNDLER_TYPE_CLASSNAME, getRawTypeQualifiedName(type), typeArgs.build());
   }
 
   private TypeUtils() {}
