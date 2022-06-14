@@ -18,6 +18,8 @@ package com.google.android.enterprise.connectedapps.instrumented.tests;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Application;
+import android.util.Log;
+
 import androidx.test.core.app.ApplicationProvider;
 import com.google.android.enterprise.connectedapps.exceptions.UnavailableProfileException;
 import com.google.android.enterprise.connectedapps.instrumented.utils.InstrumentedTestUtilities;
@@ -65,7 +67,7 @@ public class SecondUserTest {
   public void call_hasWorkProfile_hasSecondUser_executesOnWorkProfile()
       throws UnavailableProfileException {
     utilities.ensureReadyForCrossProfileCalls();
-    utilities.manuallyConnectAndWait();
+    utilities.addConnectionHolderAndWait(this);
     int secondUserId = utilities.createUser("SecondUser");
 
     try {
@@ -83,9 +85,8 @@ public class SecondUserTest {
   public void call_hasWorkProfile_hasSecondUser_fromWorkProfile_executesOnThisUser()
       throws UnavailableProfileException {
     utilities.ensureReadyForCrossProfileCalls();
-    utilities.manuallyConnectAndWait();
+    utilities.addConnectionHolderAndWait(this);
     int secondUserId = utilities.createUser("SecondUser");
-
     try {
       utilities.startUser(secondUserId);
       utilities.installInUser(secondUserId);
@@ -102,7 +103,6 @@ public class SecondUserTest {
           },
           /* pollFrequency= */ 100,
           /* timeoutMillis= */ 10000);
-
       assertThat(type.other().getOtherUserId()).isEqualTo(0);
     } finally {
       utilities.removeUser(secondUserId);

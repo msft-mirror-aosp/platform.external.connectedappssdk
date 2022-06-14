@@ -17,6 +17,7 @@ package com.google.android.enterprise.connectedapps.testing;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import android.app.UiAutomation;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
@@ -66,18 +67,15 @@ public class InstrumentedTestUtilities {
   public void ensureReadyForCrossProfileCalls(String packageName) {
     ensureWorkProfileExists();
 
-    if (!packageName.equals(context.getPackageName())) {
-      // ensureWorkProfileExists will install the test package
-      installInWorkProfile(packageName);
-    }
+    installInWorkProfile(packageName);
 
     int workProfileUserId = getWorkProfileUserId();
     startUser(workProfileUserId);
 
     grantInteractAcrossUsers(packageName);
+    grantInteractAcrossUsers(packageName, workProfileUserId);
 
-    ProfileAvailabilityPoll.blockUntilProfileRunningAndUnlocked(
-        context, getWorkProfileUserHandle());
+    ProfileAvailabilityPoll.blockUntilUserRunningAndUnlocked(context, getWorkProfileUserHandle());
   }
 
   private UserHandle getWorkProfileUserHandle() {
@@ -105,9 +103,15 @@ public class InstrumentedTestUtilities {
   }
 
   private static void grantInteractAcrossUsers(String packageName) {
-    runCommandWithOutput("pm grant " + packageName + " android.permission.INTERACT_ACROSS_USERS");
-    runCommandWithOutput(
-        "pm grant " + packageName + " android.permission.INTERACT_ACROSS_PROFILES");
+    UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+    uiAutomation.grantRuntimePermission(packageName, "android.permission.INTERACT_ACROSS_USERS");
+  }
+
+  private static void grantInteractAcrossUsers(String packageName, int id) {
+    UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+    uiAutomation.grantRuntimePermissionAsUser(packageName, "android.permission.INTERACT_ACROSS_USERS", UserHandle.of(id));
   }
 
   /** Remove a work profile if one exists. */
@@ -222,7 +226,7 @@ public class InstrumentedTestUtilities {
           }
         };
 
-    connector.registerConnectionListener(connectionListener);
+    connector.addConnectionListener(connectionListener);
     connectionListener.connectionChanged();
 
     try {
@@ -231,7 +235,7 @@ public class InstrumentedTestUtilities {
       throw new AssertionError("Error waiting to disconnect", e);
     }
 
-    connector.unregisterConnectionListener(connectionListener);
+    connector.removeConnectionListener(connectionListener);
   }
 
   /**
@@ -249,7 +253,7 @@ public class InstrumentedTestUtilities {
           }
         };
 
-    connector.registerConnectionListener(connectionListener);
+    connector.addConnectionListener(connectionListener);
     connectionListener.connectionChanged();
 
     try {
@@ -258,7 +262,7 @@ public class InstrumentedTestUtilities {
       throw new AssertionError("Error waiting to connect", e);
     }
 
-    connector.unregisterConnectionListener(connectionListener);
+    connector.removeConnectionListener(connectionListener);
   }
 
   private static String runCommandWithOutput(String command) {
