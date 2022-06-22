@@ -23,7 +23,6 @@ import androidx.test.core.app.ApplicationProvider;
 import com.google.android.enterprise.connectedapps.exceptions.UnavailableProfileException;
 import com.google.android.enterprise.connectedapps.instrumented.utils.InstrumentedTestUtilities;
 import com.google.android.enterprise.connectedapps.testapp.connector.TestProfileConnector;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -54,7 +53,7 @@ public class ConnectTest {
 
   @After
   public void teardown() {
-    connector.stopManualConnectionManagement();
+    connector.clearConnectionHolders();
     utilities.waitForDisconnected();
   }
 
@@ -73,15 +72,6 @@ public class ConnectTest {
   }
 
   @Test
-  public void connect_startsManuallyManagingConnection() throws Exception {
-    utilities.ensureReadyForCrossProfileCalls();
-
-    connector.connect();
-
-    assertThat(connector.isManuallyManagingConnection()).isTrue();
-  }
-
-  @Test
   public void connect_otherProfileNotAvailable_throwsUnavailableProfileException() {
     utilities.ensureNoWorkProfile();
 
@@ -95,15 +85,6 @@ public class ConnectTest {
     connectIgnoreExceptions();
 
     assertThat(connector.isConnected()).isFalse();
-  }
-
-  @Test
-  public void connect_otherProfileNotAvailable_doesNotStartManuallyManagingConnection() {
-    utilities.ensureNoWorkProfile();
-
-    connectIgnoreExceptions();
-
-    assertThat(connector.isManuallyManagingConnection()).isFalse();
   }
 
   @Test
