@@ -117,7 +117,6 @@ public class HappyPathEndToEndTest {
   public void synchronousMethod_fromOtherProfile_resultIsCorrect()
       throws UnavailableProfileException {
     utilities.addConnectionHolderAndWait(this);
-
     typeWithContext.other().connectToOtherProfile();
     BlockingPoll.poll(
         () -> {

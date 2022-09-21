@@ -18,7 +18,6 @@ package com.google.android.enterprise.connectedapps.testing;
 import android.content.Context;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.util.Log;
 
 /** A class to allow blocking until a profile is available. */
 public final class ProfileAvailabilityPoll {

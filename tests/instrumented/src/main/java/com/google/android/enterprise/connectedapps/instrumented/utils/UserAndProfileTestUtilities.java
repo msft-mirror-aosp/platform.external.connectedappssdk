@@ -31,10 +31,8 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import android.os.UserHandle;
-import android.os.UserManager;
-import android.util.Log;
 
+// TODO(b/160147511): Remove use of service calls for versions after R
 final class UserAndProfileTestUtilities {
 
   private static final int R_REQUEST_QUIET_MODE_ENABLED_ID = 72;
@@ -42,9 +40,6 @@ final class UserAndProfileTestUtilities {
 
   private static final String USER_ID_KEY = "USER_ID";
   private static final Parameter USER_ID_PARAMETER = new Parameter(USER_ID_KEY);
-
-  private static final UserManager userManager =
-    InstrumentationRegistry.getInstrumentation().getContext().getSystemService(UserManager.class);
 
   private static final ServiceCall R_TURN_OFF_USER_COMMAND =
       new ServiceCall("user", R_REQUEST_QUIET_MODE_ENABLED_ID)
@@ -81,11 +76,7 @@ final class UserAndProfileTestUtilities {
           .addIntParam(0); // target
 
   static void turnOnUser(int userId) {
-    if (VERSION.SDK_INT > VERSION_CODES.R) {
-      InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-      userManager.requestQuietModeEnabled(false, UserHandle.of(userId));
-      InstrumentationRegistry.getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-    } else if (VERSION.SDK_INT == VERSION_CODES.R) {
+    if (VERSION.SDK_INT == VERSION_CODES.R) {
       runServiceCall(R_TURN_ON_USER_COMMAND, userId);
     } else if (VERSION.SDK_INT == VERSION_CODES.Q || VERSION.SDK_INT == VERSION_CODES.P) {
       runServiceCall(TURN_ON_USER_COMMAND, userId);
@@ -95,11 +86,7 @@ final class UserAndProfileTestUtilities {
   }
 
   static void turnOffUser(int userId) {
-    if (VERSION.SDK_INT > VERSION_CODES.R) {
-      InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-      userManager.requestQuietModeEnabled(true, UserHandle.of(userId));
-      InstrumentationRegistry.getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-    } else if (VERSION.SDK_INT == VERSION_CODES.R) {
+    if (VERSION.SDK_INT == VERSION_CODES.R) {
       runServiceCall(R_TURN_OFF_USER_COMMAND, userId);
     } else if (VERSION.SDK_INT == VERSION_CODES.Q || VERSION.SDK_INT == VERSION_CODES.P) {
       runServiceCall(TURN_OFF_USER_COMMAND, userId);

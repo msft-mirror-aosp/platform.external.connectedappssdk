@@ -37,6 +37,7 @@ java_plugin {
         "ConnectedAppsSDK_Annotations",
         "guava-android-annotation-stubs",
         "auto_value_annotations",
+        "error_prone_annotations",
         "guava",
         "ConnectedAppsSDK_Annotations",
         "ConnectedAppsSDK_Test_Annotations"

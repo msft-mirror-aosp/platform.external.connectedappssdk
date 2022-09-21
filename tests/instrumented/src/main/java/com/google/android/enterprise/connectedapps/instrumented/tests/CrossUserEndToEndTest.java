@@ -20,8 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Application;
 import android.os.UserHandle;
-import android.util.Log;
-
 import androidx.test.core.app.ApplicationProvider;
 import com.google.android.enterprise.connectedapps.exceptions.UnavailableProfileException;
 import com.google.android.enterprise.connectedapps.instrumented.utils.BlockingExceptionCallbackListener;
@@ -32,7 +30,6 @@ import com.google.android.enterprise.connectedapps.testapp.crossuser.AppCrossUse
 import com.google.android.enterprise.connectedapps.testapp.crossuser.UserTestCrossUserType;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,7 +48,7 @@ public class CrossUserEndToEndTest {
 
   private static final String STRING = "String";
 
-  private static final UserManagementTestUtilities userUtilities =
+  private final UserManagementTestUtilities userUtilities =
       new UserManagementTestUtilities(context);
 
   private int otherUserId;
@@ -77,11 +74,6 @@ public class CrossUserEndToEndTest {
     connectorUtilities.waitForDisconnected(other);
   }
 
-  @AfterClass
-  public static void teardownClass() {
-    userUtilities.ensureNoSecondaryUser();
-  }
-
   @Test
   public void isAvailable_isTrue() {
     assertThat(connector.isAvailable(other)).isTrue();
@@ -105,7 +97,9 @@ public class CrossUserEndToEndTest {
   @Test
   public void hasConnected_userStopped_isConnectedIsFalse() throws UnavailableProfileException {
     connector.connect(other);
+
     userUtilities.stopUser(otherUserId);
+
     assertThat(connector.isConnected(other)).isFalse();
   }
 

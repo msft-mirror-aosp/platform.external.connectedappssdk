@@ -15,22 +15,14 @@
  */
 package com.google.android.enterprise.connectedapps.processor.containers;
 
-import static java.util.stream.Collectors.toSet;
-
 import com.google.android.enterprise.connectedapps.annotations.CrossProfileConfiguration;
-import com.google.android.enterprise.connectedapps.processor.SupportedTypes;
-import com.google.android.enterprise.connectedapps.processor.TypeUtils;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import com.squareup.javapoet.ClassName;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
 /** Wrapper of a {@link CrossProfileConfiguration} annotated class. */
 @AutoValue
@@ -56,13 +48,11 @@ public abstract class CrossProfileConfigurationInfo {
 
   public static CrossProfileConfigurationInfo create(
       ValidatorContext context, ValidatorCrossProfileConfigurationInfo configuration) {
-    Collection<ProviderClassInfo> providerClasses =
-        configuration.providerClassElements().stream()
-            .map(
-                m ->
-                    ProviderClassInfo.create(
-                        context, ValidatorProviderClassInfo.create(context, m)))
-            .collect(toSet());
+    ImmutableSet.Builder<ProviderClassInfo> providerClassesBuilder = ImmutableSet.builder();
+    configuration.providerClassElements().stream()
+        .map(m -> ProviderClassInfo.create(context, ValidatorProviderClassInfo.create(context, m)))
+        .forEach(providerClassesBuilder::add);
+    ImmutableSet<ProviderClassInfo> providerClasses = providerClassesBuilder.build();
 
     ConnectorInfo connectorInfo =
         providerClasses.stream()
@@ -74,7 +64,7 @@ public abstract class CrossProfileConfigurationInfo {
 
     return new AutoValue_CrossProfileConfigurationInfo(
         configuration.configurationElement(),
-        ImmutableSet.copyOf(providerClasses),
+        providerClasses,
         configuration.serviceSuperclass(),
         configuration.serviceClass(),
         connectorInfo);
@@ -93,27 +83,5 @@ public abstract class CrossProfileConfigurationInfo {
     }
 
     return ConnectorInfo.unspecified(context, context.globalSupportedTypes());
-  }
-
-  private static Collection<Type> convertTypeMirrorToSupportedTypes(
-      SupportedTypes supportedTypes, TypeMirror typeMirror) {
-    if (TypeUtils.isGeneric(typeMirror)) {
-      return convertGenericTypeMirrorToSupportedTypes(supportedTypes, typeMirror);
-    }
-    return Collections.singleton(supportedTypes.getType(typeMirror));
-  }
-
-  private static Collection<Type> convertGenericTypeMirrorToSupportedTypes(
-      SupportedTypes supportedTypes, TypeMirror typeMirror) {
-    Collection<Type> types = new HashSet<>();
-    TypeMirror genericType = TypeUtils.removeTypeArguments(typeMirror);
-    Type supportedType = supportedTypes.getType(genericType);
-    if (!supportedType.isSupportedWithAnyGenericType()) {
-      for (TypeMirror typeArgument : TypeUtils.extractTypeArguments(typeMirror)) {
-        types.addAll(convertTypeMirrorToSupportedTypes(supportedTypes, typeArgument));
-      }
-    }
-    types.add(supportedTypes.getType(genericType));
-    return types;
   }
 }
