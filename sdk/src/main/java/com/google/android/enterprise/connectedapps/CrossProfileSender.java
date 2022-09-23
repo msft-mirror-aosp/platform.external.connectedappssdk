@@ -211,19 +211,14 @@ public final class CrossProfileSender {
       new AtomicReference<>();
   private final AtomicReference<ScheduledFuture<?>> scheduledBindTimeout = new AtomicReference<>();
 
-  // Interaction with explicitConnectionHolders, connectionHolders, and connectionHolderAliases must
+  // Interaction with connectionHolders, and connectionHolderAliases must
   //  take place on the scheduled executor thread
-  private final Set<Object> explicitConnectionHolders =
-      Collections.newSetFromMap(new WeakHashMap<>());
   private final Set<Object> connectionHolders = Collections.newSetFromMap(new WeakHashMap<>());
   private final Map<Object, Set<Object>> connectionHolderAliases = new WeakHashMap<>();
   private final Set<ExceptionCallback> unavailableProfileExceptionWatchers =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final ConcurrentLinkedDeque<CrossProfileCall> asyncCallQueue =
       new ConcurrentLinkedDeque<>();
-  // This will be updated when we interact with explicitConnectionHolders - it won't be in-sync if
-  // explicitConnectionHolders is emptied by the garbage collector but that won't cause issues
-  private final AtomicBoolean explicitConnectionHoldersIsEmpty = new AtomicBoolean(true);
 
   private final ServiceConnection connection =
       new ServiceConnection() {
@@ -397,10 +392,8 @@ public final class CrossProfileSender {
 
     cancelAutomaticDisconnection();
 
-    explicitConnectionHoldersIsEmpty.set(false);
     scheduledExecutorService.execute(
         () -> {
-          explicitConnectionHolders.add(connectionHolder);
           connectionHolders.add(connectionHolder);
         });
 
@@ -810,7 +803,6 @@ public final class CrossProfileSender {
   void addConnectionHolder(Object o) {
     scheduledExecutorService.execute(
         () -> {
-          explicitConnectionHolders.add(o);
           connectionHolders.add(o);
 
           cancelAutomaticDisconnection();
@@ -835,7 +827,6 @@ public final class CrossProfileSender {
     scheduledExecutorService.execute(
         () -> {
           connectionHolders.clear();
-          explicitConnectionHolders.clear();
           connectionHolderAliases.clear();
 
           maybeScheduleAutomaticDisconnection();
@@ -852,8 +843,6 @@ public final class CrossProfileSender {
       }
     }
 
-    explicitConnectionHolders.remove(o);
-    explicitConnectionHoldersIsEmpty.set(explicitConnectionHolders.isEmpty());
     connectionHolders.remove(o);
     unavailableProfileExceptionWatchers.remove(o);
   }

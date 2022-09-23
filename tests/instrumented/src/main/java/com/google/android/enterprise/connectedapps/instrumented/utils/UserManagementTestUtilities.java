@@ -38,10 +38,6 @@ public class UserManagementTestUtilities {
     runCommandWithOutput("am stop-user -w -f " + userId);
   }
 
-  public void removeUser(int userId) {
-    runCommandWithOutput("pm remove-user " + userId);
-  }
-
   /** Create a user, perform all necessary user setup, and return their ID. */
   public int ensureUserReadyForCrossUserCalls() {
     return ensureUserReadyForCrossUserCalls(context.getPackageName());
@@ -65,16 +61,6 @@ public class UserManagementTestUtilities {
     }
 
     return createOtherUser();
-  }
-
-  public void ensureNoSecondaryUser() {
-    if (!hasOtherUser()) {
-      return;
-    }
-
-    int userId = getOtherUserId();
-
-    removeUser(userId);
   }
 
   private int createOtherUser() {
