@@ -13,25 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.enterprise.connectedapps.testapp.crossuser;
+package com.google.android.enterprise.connectedapps.testapp.connector;
 
 import android.content.Context;
 import com.google.android.enterprise.connectedapps.ProfileConnector;
 import com.google.android.enterprise.connectedapps.annotations.CustomProfileConnector;
 import com.google.android.enterprise.connectedapps.annotations.CustomProfileConnector.ProfileType;
 import com.google.android.enterprise.connectedapps.annotations.GeneratedProfileConnector;
+import com.google.android.enterprise.connectedapps.annotations.UncaughtExceptionsPolicy;
+import com.google.android.enterprise.connectedapps.testapp.wrappers.ParcelableCustomWrapper;
+import com.google.android.enterprise.connectedapps.testapp.wrappers.SimpleFutureWrapper;
 import java.util.concurrent.ScheduledExecutorService;
 
 @GeneratedProfileConnector
-@CustomProfileConnector(primaryProfile = ProfileType.WORK)
-public interface TestCrossUserConnector extends ProfileConnector {
-  static TestCrossUserConnector create(Context context) {
-    return GeneratedTestCrossUserConnector.builder(context).build();
+@CustomProfileConnector(
+    primaryProfile = ProfileType.WORK,
+    uncaughtExceptionsPolicy = UncaughtExceptionsPolicy.NOTIFY_SUPPRESS,
+    parcelableWrappers = {ParcelableCustomWrapper.class},
+    futureWrappers = {SimpleFutureWrapper.class})
+public interface ExceptionsSuppressingConnector extends ProfileConnector {
+  static ExceptionsSuppressingConnector create(Context context) {
+    return GeneratedExceptionsSuppressingConnector.builder(context).build();
   }
 
-  static TestCrossUserConnector create(
+  static ExceptionsSuppressingConnector create(
       Context context, ScheduledExecutorService scheduledExecutorService) {
-    return GeneratedTestCrossUserConnector.builder(context)
+    return GeneratedExceptionsSuppressingConnector.builder(context)
         .setScheduledExecutorService(scheduledExecutorService)
         .build();
   }
