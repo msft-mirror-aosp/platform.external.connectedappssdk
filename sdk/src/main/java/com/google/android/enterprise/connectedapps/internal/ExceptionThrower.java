@@ -18,10 +18,10 @@ package com.google.android.enterprise.connectedapps.internal;
 import android.os.Handler;
 import android.os.Looper;
 
-/** Utility class for throwing an exception in the background after a delay. */
-public final class BackgroundExceptionThrower {
+/** Utility class for throwing an exception on the main thread after a delay. */
+public final class ExceptionThrower {
 
-  private BackgroundExceptionThrower() {}
+  private ExceptionThrower() {}
 
   private static class ThrowingRunnable implements Runnable {
     RuntimeException runtimeException;
@@ -35,24 +35,22 @@ public final class BackgroundExceptionThrower {
       this.error = error;
     }
 
+
     @Override
     public void run() {
-      if (error != null) {
-        throw error;
-      }
       throw runtimeException;
     }
   }
 
-  /** Throw the given {@link Throwable} after a delay on the main looper. */
-  public static void throwInBackground(RuntimeException throwable) {
+  /** Throw the given {@link RuntimeException} after a delay on the main looper. */
+  public static void delayThrow(RuntimeException runtimeException) {
     // We add a small delay to ensure that the return can be completed before crashing
-    new Handler(Looper.getMainLooper()).postDelayed(new ThrowingRunnable(throwable), 1000);
+    new Handler(Looper.getMainLooper()).postDelayed(new ThrowingRunnable(runtimeException), 1000);
   }
 
   /** Throw the given {@link Error} after a delay on the main looper. */
-  public static void throwInBackground(Error throwable) {
+  public static void delayThrow(Error error) {
     // We add a small delay to ensure that the return can be completed before crashing
-    new Handler(Looper.getMainLooper()).postDelayed(new ThrowingRunnable(throwable), 1000);
+    new Handler(Looper.getMainLooper()).postDelayed(new ThrowingRunnable(error), 1000);
   }
 }
