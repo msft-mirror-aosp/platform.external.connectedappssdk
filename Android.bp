@@ -92,3 +92,43 @@ android_library {
     manifest: "testing/sdk/src/main/AndroidManifest.xml",
     min_sdk_version: "28",
 }
+
+android_library {
+    name: "ConnectedAppsSDK_SharedTestApp",
+    sdk_version: "test_current",
+    srcs: [
+        "tests/shared/src/main/java/**/*.java"
+    ],
+    manifest: "tests/shared/src/main/AndroidManifest.xml",
+    min_sdk_version: "28",
+    static_libs: [
+        "ConnectedAppsSDK_Annotations",
+        "ConnectedAppsSDK",
+        "guava",
+        "truth-prebuilt"
+    ],
+    plugins: ["ConnectedAppsSDK_Processor"],
+}
+
+// We only run instrumented tests in AOSP
+android_test {
+    name: "ConnectedAppsSDKTest",
+    srcs: [
+        "tests/instrumented/src/main/java/**/*.java"
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    static_libs: [
+        "ConnectedAppsSDK",
+        "ConnectedAppsSDK_Annotations",
+        "ConnectedAppsSDK_SharedTestApp",
+        "ConnectedAppsSDK_Testing",
+        "androidx.test.ext.junit",
+        "ctstestrunner-axt",
+        "truth-prebuilt",
+        "testng", // for assertThrows
+    ],
+    manifest: "tests/instrumented/src/AndroidManifest.xml",
+    min_sdk_version: "28"
+}
