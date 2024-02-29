@@ -4,6 +4,7 @@ package {
 
 java_library {
     name: "ConnectedAppsSDK_Annotations",
+    sdk_version: "core_current",
     srcs: [
         "annotations/src/main/java/**/*.java",
     ],
@@ -12,6 +13,7 @@ java_library {
 
 java_library {
     name: "ConnectedAppsSDK_Test_Annotations",
+    sdk_version: "core_current",
     srcs: [
         "testing/annotations/src/main/java/**/*.java",
     ],
