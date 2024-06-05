@@ -4,28 +4,30 @@ package {
 
 java_library {
     name: "ConnectedAppsSDK_Annotations",
+    sdk_version: "core_current",
     srcs: [
-        "annotations/src/main/java/**/*.java"
+        "annotations/src/main/java/**/*.java",
     ],
-    host_supported: true
+    host_supported: true,
 }
 
 java_library {
     name: "ConnectedAppsSDK_Test_Annotations",
+    sdk_version: "core_current",
     srcs: [
-        "testing/annotations/src/main/java/**/*.java"
+        "testing/annotations/src/main/java/**/*.java",
     ],
-    host_supported: true
+    host_supported: true,
 }
 
 filegroup {
     name: "ConnectedAppsSDK_Resources",
 
     srcs: [
-        "processor/src/main/resources/**/*"
+        "processor/src/main/resources/**/*",
     ],
 
-    path: "processor/src/main/resources"
+    path: "processor/src/main/resources",
 }
 
 java_plugin {
@@ -40,27 +42,30 @@ java_plugin {
         "error_prone_annotations",
         "guava",
         "ConnectedAppsSDK_Annotations",
-        "ConnectedAppsSDK_Test_Annotations"
+        "ConnectedAppsSDK_Test_Annotations",
     ],
     srcs: [
-        "processor/src/main/java/**/*.java"
+        "processor/src/main/java/**/*.java",
     ],
     java_resources: [
-        ":ConnectedAppsSDK_Resources"
+        ":ConnectedAppsSDK_Resources",
     ],
-    plugins: ["auto_service_plugin", "auto_value_plugin"],
+    plugins: [
+        "auto_service_plugin",
+        "auto_value_plugin",
+    ],
     generates_api: true,
-    use_tools_jar: true
+    use_tools_jar: true,
 }
 
 filegroup {
     name: "ConnectedAppsSDK_AIDL",
 
     srcs: [
-        "sdk/src/main/aidl/**/*.aidl"
+        "sdk/src/main/aidl/**/*.aidl",
     ],
 
-    path: "sdk/src/main/aidl"
+    path: "sdk/src/main/aidl",
 }
 
 android_library {
@@ -68,7 +73,7 @@ android_library {
     sdk_version: "test_current",
     srcs: [
         "sdk/src/main/java/**/*.java",
-        ":ConnectedAppsSDK_AIDL"
+        ":ConnectedAppsSDK_AIDL",
     ],
     static_libs: [
         "ConnectedAppsSDK_Annotations",
@@ -97,7 +102,7 @@ android_library {
     name: "ConnectedAppsSDK_SharedTestApp",
     sdk_version: "test_current",
     srcs: [
-        "tests/shared/src/main/java/**/*.java"
+        "tests/shared/src/main/java/**/*.java",
     ],
     manifest: "tests/shared/src/main/AndroidManifest.xml",
     min_sdk_version: "28",
@@ -105,7 +110,7 @@ android_library {
         "ConnectedAppsSDK_Annotations",
         "ConnectedAppsSDK",
         "guava",
-        "truth-prebuilt"
+        "truth",
     ],
     plugins: ["ConnectedAppsSDK_Processor"],
 }
@@ -114,7 +119,7 @@ android_library {
 android_test {
     name: "ConnectedAppsSDKTest",
     srcs: [
-        "tests/instrumented/src/main/java/**/*.java"
+        "tests/instrumented/src/main/java/**/*.java",
     ],
     test_suites: [
         "general-tests",
@@ -126,9 +131,9 @@ android_test {
         "ConnectedAppsSDK_Testing",
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "testng", // for assertThrows
     ],
     manifest: "tests/instrumented/src/AndroidManifest.xml",
-    min_sdk_version: "28"
+    min_sdk_version: "28",
 }
