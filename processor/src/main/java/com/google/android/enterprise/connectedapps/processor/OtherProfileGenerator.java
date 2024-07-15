@@ -110,6 +110,23 @@ final class OtherProfileGenerator {
             .addStatement("return new $T(this)", ifAvailableClass)
             .build());
 
+    ClassName singleSenderCanThrowCacheableInterface =
+        InterfaceGenerator.getSingleSenderCanThrowCacheableInterfaceClassName(
+            generatorContext, crossProfileType);
+    ClassName otherProfileCacheableClass =
+        OtherProfileCacheableGenerator.getOtherProfileCacheableClassName(
+            generatorContext, crossProfileType);
+
+    if (crossProfileType.hasCacheableMethod()) {
+      classBuilder.addMethod(
+          MethodSpec.methodBuilder("useCache")
+              .addAnnotation(Override.class)
+              .addModifiers(Modifier.PUBLIC)
+              .returns(singleSenderCanThrowCacheableInterface)
+              .addStatement("return new $T(this)", otherProfileCacheableClass)
+              .build());
+    }
+
     for (CrossProfileMethodInfo method : crossProfileType.crossProfileMethods()) {
       if (method.isBlocking(generatorContext, crossProfileType)) {
         generateBlockingMethodOnOtherProfileClass(classBuilder, method, crossProfileType);
