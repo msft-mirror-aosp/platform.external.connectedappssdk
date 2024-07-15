@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableMap;
  * Wrapper for reading & writing {@link ImmutableMap} instances from and to {@link Parcel}
  * instances.
  */
-public class ParcelableImmutableMap<E, F> implements Parcelable {
+public final class ParcelableImmutableMap<E, F> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
   private static final int KEY_TYPE_INDEX = 0;
