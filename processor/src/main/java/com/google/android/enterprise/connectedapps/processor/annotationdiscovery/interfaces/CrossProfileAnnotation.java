@@ -23,5 +23,7 @@ public interface CrossProfileAnnotation {
 
   Class<?>[] futureWrappers();
 
+  Class<?>[] additionalUsedTypes();
+
   boolean isStatic();
 }
