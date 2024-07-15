@@ -19,81 +19,91 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashMap;
+import com.google.common.collect.ImmutableListMultimap;
 import java.util.Map;
 
-/** Wrapper for reading & writing {@link Map} instances from and to {@link Parcel} instances. */
-public final class ParcelableMap<E, F> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableListMultimap} instances from and to {@link Parcel}
+ * instances.
+ */
+public final class ParcelableImmutableListMultimap<E, F> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
+  private static final int KEY_TYPE_INDEX = 0;
+  private static final int VALUE_TYPE_INDEX = 1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Map<E, F> map;
+  private final ImmutableListMultimap<E, F> listMultimap;
 
   /**
-   * Create a wrapper for a given map.
+   * Create a wrapper for a given immutable listMultimap.
    *
    * <p>The passed in {@link Bundler} must be capable of bundling {@code E} and {@code F}.
    */
-  public static <E, F> ParcelableMap<E, F> of(Bundler bundler, BundlerType type, Map<E, F> map) {
-    return new ParcelableMap<>(bundler, type, map);
+  public static <E, F> ParcelableImmutableListMultimap<E, F> of(
+      Bundler bundler, BundlerType type, ImmutableListMultimap<E, F> listMultimap) {
+    return new ParcelableImmutableListMultimap<>(bundler, type, listMultimap);
   }
 
-  public Map<E, F> get() {
-    return map;
+  public ImmutableListMultimap<E, F> get() {
+    return listMultimap;
   }
 
-  private ParcelableMap(Bundler bundler, BundlerType type, Map<E, F> map) {
+  private ParcelableImmutableListMultimap(
+      Bundler bundler, BundlerType type, ImmutableListMultimap<E, F> listMultimap) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
     this.bundler = bundler;
     this.type = type;
-    this.map = map;
+    this.listMultimap = listMultimap;
   }
 
-  private ParcelableMap(Parcel in) {
+  private ParcelableImmutableListMultimap(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
     if (size == NULL_SIZE) {
       type = null;
-      map = null;
+      listMultimap = null;
       return;
     }
 
-    map = new HashMap<>();
+    ImmutableListMultimap.Builder<E, F> listMultimapBuilder = ImmutableListMultimap.builder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType keyType = type.typeArguments().get(0);
-      BundlerType valueType = type.typeArguments().get(1);
+      BundlerType keyType = type.typeArguments().get(KEY_TYPE_INDEX);
+      BundlerType valueType = type.typeArguments().get(VALUE_TYPE_INDEX);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
         E key = (E) bundler.readFromParcel(in, keyType);
         @SuppressWarnings("unchecked")
         F value = (F) bundler.readFromParcel(in, valueType);
-        map.put(key, value);
+        listMultimapBuilder.put(key, value);
       }
     }
+
+    listMultimap = listMultimapBuilder.build();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(bundler, flags);
 
-    if (map == null) {
+    if (listMultimap == null) {
       dest.writeInt(NULL_SIZE);
       return;
     }
 
-    dest.writeInt(map.size());
+    dest.writeInt(listMultimap.size());
     dest.writeParcelable(type, flags);
-    if (!map.isEmpty()) {
+    if (!listMultimap.isEmpty()) {
       BundlerType keyType = type.typeArguments().get(0);
       BundlerType valueType = type.typeArguments().get(1);
 
-      for (Map.Entry<E, F> entry : map.entrySet()) {
+      for (Map.Entry<E, F> entry : listMultimap.entries()) {
         bundler.writeToParcel(dest, entry.getKey(), keyType, flags);
         bundler.writeToParcel(dest, entry.getValue(), valueType, flags);
       }
@@ -106,16 +116,16 @@ public final class ParcelableMap<E, F> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableMap> CREATOR =
-      new Creator<ParcelableMap>() {
+  public static final Creator<ParcelableImmutableListMultimap> CREATOR =
+      new Creator<ParcelableImmutableListMultimap>() {
         @Override
-        public ParcelableMap createFromParcel(Parcel in) {
-          return new ParcelableMap(in);
+        public ParcelableImmutableListMultimap createFromParcel(Parcel in) {
+          return new ParcelableImmutableListMultimap(in);
         }
 
         @Override
-        public ParcelableMap[] newArray(int size) {
-          return new ParcelableMap[size];
+        public ParcelableImmutableListMultimap[] newArray(int size) {
+          return new ParcelableImmutableListMultimap[size];
         }
       };
 }

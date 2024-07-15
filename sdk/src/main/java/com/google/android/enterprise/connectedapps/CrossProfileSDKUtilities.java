@@ -17,6 +17,7 @@ package com.google.android.enterprise.connectedapps;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build.VERSION;
@@ -27,6 +28,7 @@ import com.google.android.enterprise.connectedapps.annotations.AvailabilityRestr
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Utility methods for acting on profiles. These methods should only be used by the SDK. */
@@ -74,7 +76,24 @@ class CrossProfileSDKUtilities {
   }
 
   static boolean isRunningOnPersonalProfile(Context context) {
+    if (VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
+      UserManager userManager = context.getSystemService(UserManager.class);
+      return !userManager.isProfile();
+    }
     return !isRunningOnWorkProfile(context);
+  }
+
+  /**
+   * Check if a user is either the personal user or the managed work profile.
+   *
+   * <p>If the user is not a profile, it is assumed to be the personal user.
+   */
+  static boolean isPersonalOrWorkProfile(CrossProfileApps crossProfileApps, UserHandle userHandle) {
+    if (VERSION.SDK_INT >= VERSION_CODES.VANILLA_ICE_CREAM) {
+      return crossProfileApps.isManagedProfile(userHandle)
+          || !crossProfileApps.isProfile(userHandle);
+    }
+    throw new UnsupportedOperationException("isPersonalOrWorkProfile is not supported on this SDK");
   }
 
   /**
@@ -85,6 +104,14 @@ class CrossProfileSDKUtilities {
    */
   @Nullable
   static UserHandle selectUserHandleToBind(Context context, List<UserHandle> userHandles) {
+    if (VERSION.SDK_INT >= VERSION_CODES.VANILLA_ICE_CREAM) {
+      CrossProfileApps crossProfileApps = context.getSystemService(CrossProfileApps.class);
+      userHandles =
+          userHandles.stream()
+              .filter(userHandle -> isPersonalOrWorkProfile(crossProfileApps, userHandle))
+                  .toList();
+    }
+
     if (userHandles.isEmpty()) {
       return null;
     }

@@ -17,7 +17,7 @@ package com.google.android.enterprise.connectedapps.processor.containers;
 
 import static com.google.android.enterprise.connectedapps.processor.annotationdiscovery.AnnotationFinder.hasCrossProfileCallbackAnnotation;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toCollection;
 
 import com.google.android.enterprise.connectedapps.annotations.Cacheable;
 import com.google.android.enterprise.connectedapps.annotations.CrossProfile;
@@ -28,6 +28,7 @@ import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.lang.model.element.Element;
@@ -65,13 +66,13 @@ public abstract class CrossProfileMethodInfo {
   public Collection<TypeName> thrownExceptions() {
     return methodElement().getThrownTypes().stream()
         .map(ClassName::get)
-        .collect(toSet());
+        .collect(toCollection(LinkedHashSet::new));
   }
 
   public Collection<TypeMirror> automaticallyResolvedParameterTypes(SupportedTypes supportedTypes) {
     return parameterTypes().stream()
         .filter(supportedTypes::isAutomaticallyResolved)
-        .collect(toSet());
+        .collect(toCollection(LinkedHashSet::new));
   }
 
   /**
@@ -141,7 +142,9 @@ public abstract class CrossProfileMethodInfo {
 
   /** An unordered collection of the types used in the parameters of this method. */
   public Collection<TypeMirror> parameterTypes() {
-    return methodElement().getParameters().stream().map(Element::asType).collect(toSet());
+    return methodElement().getParameters().stream()
+        .map(Element::asType)
+        .collect(toCollection(LinkedHashSet::new));
   }
 
   /**
