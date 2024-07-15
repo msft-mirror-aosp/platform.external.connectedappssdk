@@ -205,6 +205,72 @@ public abstract class ParcelableWrapper {
     tryAddWrapper(
         elements,
         wrappers,
+        "com.google.common.collect.ImmutableMultimap",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableMultimap"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableSetMultimap",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableSetMultimap"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableListMultimap",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableListMultimap"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableSortedMap",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableSortedMap"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableList",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableList"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableSet",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableSet"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableMultiset",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableMultiset"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableSortedSet",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableSortedSet"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableSortedMultiset",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableSortedMultiset"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableBiMap",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableBiMap"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
+        "com.google.common.collect.ImmutableCollection",
+        ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelableImmutableCollection"));
+
+    tryAddWrapper(
+        elements,
+        wrappers,
         "android.util.Pair",
         ClassName.get(PARCELABLE_WRAPPER_PACKAGE, "ParcelablePair"));
 

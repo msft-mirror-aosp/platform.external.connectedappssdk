@@ -21,7 +21,7 @@ import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
 
 /** Wrapper for reading & writing arrays from and to {@link Parcel} instances. */
-public class ParcelableArray<E> implements Parcelable {
+public final class ParcelableArray<E> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 

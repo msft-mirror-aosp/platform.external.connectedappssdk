@@ -29,7 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -114,10 +114,22 @@ public final class SupportedTypes {
   }
 
   boolean isValidReturnType(TypeMirror type) {
-    return isValidReturnType(type, TypeCheckContext.create());
+    // default behaviour is to check generics
+    return isValidReturnType(type, TypeCheckContext.create(), /* checkGenerics= */ true);
   }
 
-  private boolean isValidReturnType(TypeMirror type, TypeCheckContext context) {
+  boolean isValidReturnType(TypeMirror type, TypeCheckContext context) {
+    // default behaviour is to check generics
+    return isValidReturnType(type, context, /* checkGenerics= */ true);
+  }
+
+  boolean isValidReturnType(TypeMirror type, boolean checkGenerics) {
+    return isValidReturnType(type, TypeCheckContext.create(), checkGenerics);
+  }
+
+  private boolean isValidReturnType(
+      TypeMirror type, TypeCheckContext context, boolean checkGenerics) {
+
     if (TypeUtils.isArray(type)) {
       TypeMirror wrappedType = TypeUtils.extractTypeFromArray(type);
       if (TypeUtils.isGeneric(wrappedType)) {
@@ -127,10 +139,10 @@ public final class SupportedTypes {
         // We don't support non-primitive multidimensional arrays
         return TypeUtils.isPrimitiveArray(wrappedType);
       }
-      return isValidReturnType(wrappedType, context);
+      return isValidReturnType(wrappedType, context, checkGenerics);
     }
 
-    return TypeUtils.isGeneric(type)
+    return (TypeUtils.isGeneric(type) && checkGenerics)
         ? isValidGenericReturnType(type, context)
         : isValidReturnType(get(type), context);
   }
@@ -185,10 +197,20 @@ public final class SupportedTypes {
   }
 
   boolean isValidParameterType(TypeMirror type) {
-    return isValidParameterType(type, TypeCheckContext.create());
+    // default behaviour is to check generics
+    return isValidParameterType(type, TypeCheckContext.create(), /* checkGenerics= */ true);
+  }
+  
+  boolean isValidParameterType(TypeMirror type, TypeCheckContext context) {
+    // default behaviour is to check generics
+    return isValidParameterType(type, context, /* checkGenerics= */ true);
   }
 
-  boolean isValidParameterType(TypeMirror type, TypeCheckContext context) {
+  boolean isValidParameterType(TypeMirror type, boolean checkGenerics) {
+    return isValidParameterType(type, TypeCheckContext.create(), checkGenerics);
+  }
+
+  boolean isValidParameterType(TypeMirror type, TypeCheckContext context, boolean checkGenerics) {
     if (TypeUtils.isArray(type)) {
       TypeMirror wrappedType = TypeUtils.extractTypeFromArray(type);
       if (TypeUtils.isGeneric(wrappedType)) {
@@ -198,7 +220,8 @@ public final class SupportedTypes {
         // We don't support non-primitive multidimensional arrays
         return TypeUtils.isPrimitiveArray(wrappedType);
       }
-      return isValidParameterType(wrappedType, context.toBuilder().setWrapped(true).build());
+      return isValidParameterType(
+          wrappedType, context.toBuilder().setWrapped(true).build(), checkGenerics);
     }
 
     Type supportedType = get(TypeUtils.removeTypeArguments(type));
@@ -214,7 +237,7 @@ public final class SupportedTypes {
       }
     }
 
-    return TypeUtils.isGeneric(type)
+    return (TypeUtils.isGeneric(type) && checkGenerics)
         ? isValidGenericParameterType(type, context)
         : isValidParameterType(get(type));
   }
@@ -307,7 +330,7 @@ public final class SupportedTypes {
       Collection<ParcelableWrapper> parcelableWrappers,
       Collection<FutureWrapper> futureWrappers,
       Collection<ExecutableElement> methods) {
-    Map<String, Type> usableTypes = new HashMap<>();
+    Map<String, Type> usableTypes = new LinkedHashMap<>();
 
     addDefaultTypes(context, usableTypes);
     addParcelableWrapperTypes(usableTypes, parcelableWrappers);
@@ -492,7 +515,7 @@ public final class SupportedTypes {
             .setTypeMirror(elements.getTypeElement("java.lang.CharSequence").asType())
             .setAcceptableReturnType(true)
             .setAcceptableParameterType(true)
-            .setPutIntoBundleCode("$L.putString($L, String.valueOf($L))")
+            .setPutIntoBundleCode("$1L.putString($2L, $3L == null ? null : String.valueOf($3L))")
             .setGetFromBundleCode("$L.getString($L)")
             .setWriteToParcelCode("$L.writeString(String.valueOf($L))")
             .setReadFromParcelCode("$L.readString()")
@@ -839,13 +862,22 @@ public final class SupportedTypes {
       this.usableTypes = usableTypes;
     }
 
-    /** Filtering to only include used types. */
-    public Builder filterUsed(Context context, Collection<CrossProfileMethodInfo> methods) {
+    /** Filtering to only include used types and additional used types */
+    public Builder filterUsed(
+        Context context,
+        Collection<CrossProfileMethodInfo> methods,
+        Collection<TypeElement> additionalUsedTypes) {
 
-      Map<String, Type> usedTypes = new HashMap<>();
+      Map<String, Type> usedTypes = new LinkedHashMap<>();
 
       for (CrossProfileMethodInfo method : methods) {
         copySupportedTypesForMethod(context, usedTypes, method);
+      }
+
+      for (TypeElement type : additionalUsedTypes) {
+        // We do not want to recurse generics in additional types because generics will not be a
+        // supported type.
+        copySupportedType(context, usedTypes, type.asType(), /* recurseGenerics= */ false);
       }
 
       this.usableTypes = usedTypes;
@@ -861,8 +893,14 @@ public final class SupportedTypes {
       }
     }
 
+    // default behaviour is to recurse generics
     private void copySupportedType(Context context, Map<String, Type> usedTypes, TypeMirror type) {
-      if (TypeUtils.isGeneric(type)) {
+      copySupportedType(context, usedTypes, type, true);
+    }
+
+    private void copySupportedType(
+        Context context, Map<String, Type> usedTypes, TypeMirror type, boolean recurseGenerics) {
+      if (TypeUtils.isGeneric(type) && recurseGenerics) {
         copySupportedGenericType(context, usedTypes, type);
         return;
       }
@@ -915,9 +953,9 @@ public final class SupportedTypes {
       copySupportedType(usedTypes, supportedType);
     }
 
-    /** Add additianal parcelable wrappers. */
+    /** Add additional parcelable wrappers. */
     public Builder addParcelableWrappers(Collection<ParcelableWrapper> parcelableWrappers) {
-      Map<String, Type> newUsableTypes = new HashMap<>(usableTypes);
+      Map<String, Type> newUsableTypes = new LinkedHashMap<>(usableTypes);
 
       addParcelableWrapperTypes(newUsableTypes, parcelableWrappers);
 
@@ -926,9 +964,9 @@ public final class SupportedTypes {
       return this;
     }
 
-    /** Add additianal future wrappers. */
+    /** Add additional future wrappers. */
     public Builder addFutureWrappers(Collection<FutureWrapper> futureWrappers) {
-      Map<String, Type> newUsableTypes = new HashMap<>(usableTypes);
+      Map<String, Type> newUsableTypes = new LinkedHashMap<>(usableTypes);
 
       addFutureWrapperTypes(newUsableTypes, futureWrappers);
 
@@ -938,7 +976,7 @@ public final class SupportedTypes {
     }
 
     public Builder replaceWrapperPrefix(ClassName prefix) {
-      Map<String, Type> newUsableTypes = new HashMap<>();
+      Map<String, Type> newUsableTypes = new LinkedHashMap<>();
 
       for (Type usableType : usableTypes.values()) {
         if (usableType.getParcelableWrapper().isPresent()) {

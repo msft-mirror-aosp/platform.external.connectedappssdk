@@ -64,4 +64,11 @@ public @interface CrossProfile {
    * <p>This argument can only be passed when annotating types, not methods.
    */
   boolean isStatic() default false;
+
+  /**
+   * A list of additional used types
+   *
+   * <p>This argument can only be passed when annotating types, not methods.
+   */
+  Class<?>[] additionalUsedTypes() default {};
 }

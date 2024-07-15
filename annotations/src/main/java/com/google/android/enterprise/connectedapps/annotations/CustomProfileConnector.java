@@ -79,4 +79,11 @@ public @interface CustomProfileConnector {
    */
   UncaughtExceptionsPolicy uncaughtExceptionsPolicy() default
       UncaughtExceptionsPolicy.NOTIFY_RETHROW;
+
+  /**
+   * A list of additional used types
+   *
+   * <p>This argument can only be passed when annotating types, not methods.
+   */
+  Class<?>[] additionalUsedTypes() default {};
 }

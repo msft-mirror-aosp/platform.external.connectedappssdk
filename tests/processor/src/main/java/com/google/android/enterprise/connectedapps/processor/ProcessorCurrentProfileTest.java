@@ -25,6 +25,8 @@ import com.google.android.enterprise.connectedapps.processor.annotationdiscovery
 import com.google.android.enterprise.connectedapps.processor.annotationdiscovery.AnnotationPrinter;
 import com.google.android.enterprise.connectedapps.processor.annotationdiscovery.AnnotationStrings;
 import com.google.testing.compile.Compilation;
+import com.google.testing.compile.JavaFileObjects;
+import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -84,5 +86,57 @@ public class ProcessorCurrentProfileTest {
         .generatedSourceFile(NOTES_PACKAGE + ".NotesType_CurrentProfile")
         .contentsAsUtf8String()
         .contains("public NotesType_CurrentProfile(Context context, NotesType crossProfileType)");
+  }
+
+  @Test
+  public void compile_hasCacheableMethods_generatesUseCacheMethod() {
+    JavaFileObject notesType =
+        JavaFileObjects.forSourceLines(
+            NOTES_PACKAGE + ".NotesType",
+            "package " + NOTES_PACKAGE + ";",
+            "import com.google.android.enterprise.connectedapps.annotations.Cacheable;",
+            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
+            "public final class NotesType {",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  @Cacheable",
+            "  public int countNotes() {",
+            "    return 1;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        javac()
+            .withProcessors(new Processor())
+            .compile(notesType, annotatedNotesProvider(annotationPrinter));
+
+    assertThat(compilation)
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_CurrentProfile")
+        .contentsAsUtf8String()
+        .contains("public NotesType_SingleSenderCanThrowCacheable useCache()");
+  }
+
+  @Test
+  public void compile_noCacheableMethods_doesNotGenerateUseCacheMethod() {
+    JavaFileObject notesType =
+        JavaFileObjects.forSourceLines(
+            NOTES_PACKAGE + ".NotesType",
+            "package " + NOTES_PACKAGE + ";",
+            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
+            "public final class NotesType {",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  public int countNotes() {",
+            "    return 1;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        javac()
+            .withProcessors(new Processor())
+            .compile(notesType, annotatedNotesProvider(annotationPrinter));
+
+    assertThat(compilation)
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_CurrentProfile")
+        .contentsAsUtf8String()
+        .doesNotContain("public NotesType_SingleSenderCanThrowCacheable useCache()");
   }
 }

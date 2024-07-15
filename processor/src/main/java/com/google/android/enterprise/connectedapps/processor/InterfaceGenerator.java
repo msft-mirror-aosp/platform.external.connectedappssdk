@@ -69,6 +69,9 @@ final class InterfaceGenerator {
     generateSingleSenderInterface();
     generateSingleSenderCanThrowInterface();
     generateMultipleSenderInterface();
+    if (crossProfileType.hasCacheableMethod()) {
+      generateSingleSenderCanThrowCacheableInterface();
+    }
   }
 
   private void generateSingleSenderInterface() {
@@ -126,6 +129,53 @@ final class InterfaceGenerator {
     interfaceBuilder.addMethod(methodBuilder.build());
   }
 
+  private void generateSingleSenderCanThrowCacheableInterface() {
+    ClassName interfaceName =
+        getSingleSenderCanThrowCacheableInterfaceClassName(generatorContext, crossProfileType);
+
+    TypeSpec.Builder interfaceBuilder =
+        TypeSpec.interfaceBuilder(interfaceName)
+            .addModifiers(Modifier.PUBLIC)
+            .addJavadoc(
+                "Interface used for caching the results and interacting with the cached results of"
+                    + " cross-profile calls.\n",
+                crossProfileType.className());
+
+    for (CrossProfileMethodInfo method : crossProfileType.crossProfileMethods()) {
+      if (method.isCacheable()) {
+        generateMethodOnSingleSenderCanThrowCacheableInterface(
+            interfaceBuilder, method, crossProfileType);
+      }
+    }
+
+    generatorUtilities.writeClassToFile(interfaceName.packageName(), interfaceBuilder);
+  }
+
+  private void generateMethodOnSingleSenderCanThrowCacheableInterface(
+      TypeSpec.Builder interfaceBuilder,
+      CrossProfileMethodInfo method,
+      CrossProfileTypeInfo crossProfileType) {
+
+    CodeBlock methodReference = generateMethodReference(crossProfileType, method);
+
+    MethodSpec.Builder methodBuilder =
+        MethodSpec.methodBuilder(method.simpleName())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addExceptions(method.thrownExceptions())
+            .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+            .returns(method.returnTypeTypeName())
+            .addJavadoc(
+                "Attempts to fetch the cached result of calling {@link $L} on the given profile.\n"
+                    + "If a result is not already in the cache, this will make a call to {@link $L}"
+                    + " on the given profile.\n\n",
+                methodReference,
+                methodReference);
+
+    methodBuilder.addJavadoc("@see $L\n", methodReference);
+
+    interfaceBuilder.addMethod(methodBuilder.build());
+  }
+
   private void generateSingleSenderCanThrowInterface() {
     ClassName interfaceName =
         getSingleSenderCanThrowInterfaceClassName(generatorContext, crossProfileType);
@@ -151,6 +201,20 @@ final class InterfaceGenerator {
             .returns(
                 IfAvailableGenerator.getIfAvailableClassName(generatorContext, crossProfileType))
             .build());
+
+    if (crossProfileType.hasCacheableMethod()) {
+      interfaceBuilder.addMethod(
+          MethodSpec.methodBuilder("useCache")
+              .addJavadoc("Check the cache before making a cross-profile call.\n\n")
+              .addJavadoc(
+                  "<p> Throws a {@link $T} if used on a call to the current profile.\n\n",
+                  IllegalStateException.class)
+              .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+              .returns(
+                  getSingleSenderCanThrowCacheableInterfaceClassName(
+                      generatorContext, crossProfileType))
+              .build());
+    }
 
     generatorUtilities.writeClassToFile(interfaceName.packageName(), interfaceBuilder);
   }
@@ -406,8 +470,7 @@ final class InterfaceGenerator {
             PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
         .addJavadoc(
             "<p>Only the first result passed in for each profile will be passed into the "
-                + "callback.\n\n"
-        )
+                + "callback.\n\n")
         .addJavadoc("@see $L\n", methodReference);
 
     interfaceBuilder.addMethod(methodBuilder.build());
@@ -443,6 +506,12 @@ final class InterfaceGenerator {
   static ClassName getSingleSenderInterfaceClassName(
       GeneratorContext generatorContext, CrossProfileTypeInfo crossProfileType) {
     return transformClassName(crossProfileType.generatedClassName(), append("_SingleSender"));
+  }
+
+  static ClassName getSingleSenderCanThrowCacheableInterfaceClassName(
+      GeneratorContext generatorContext, CrossProfileTypeInfo crossProfileType) {
+    return transformClassName(
+        crossProfileType.generatedClassName(), append("_SingleSenderCanThrowCacheable"));
   }
 
   static ClassName getSingleSenderCanThrowInterfaceClassName(

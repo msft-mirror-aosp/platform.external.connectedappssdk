@@ -71,6 +71,9 @@ final class TestCodeGenerator {
 
     for (CrossProfileTypeInfo type : allFakedTypes) {
       new FakeOtherGenerator(generatorContext, type).generate();
+      if (type.hasCacheableMethod()) {
+        new FakeOtherCacheableGenerator(generatorContext, type).generate();
+      }
     }
 
     for (CrossProfileTypeInfo type : crossProfileFakedTypes) {

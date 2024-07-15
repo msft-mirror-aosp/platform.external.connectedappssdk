@@ -23,8 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Wrapper for reading & writing {@link List} instances from and to {@link Parcel} instances. */
-
-public class ParcelableList<E> implements Parcelable {
+public final class ParcelableList<E> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 

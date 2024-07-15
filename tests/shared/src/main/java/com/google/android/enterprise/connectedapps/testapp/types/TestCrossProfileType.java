@@ -25,6 +25,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.util.Pair;
+import com.google.android.enterprise.connectedapps.annotations.Cacheable;
 import com.google.android.enterprise.connectedapps.annotations.CrossProfile;
 import com.google.android.enterprise.connectedapps.testapp.CustomError;
 import com.google.android.enterprise.connectedapps.testapp.CustomRuntimeException;
@@ -46,7 +47,18 @@ import com.google.android.enterprise.connectedapps.testapp.connector.TestProfile
 import com.google.android.enterprise.connectedapps.testapp.wrappers.ParcelableCustomWrapper2;
 import com.google.android.enterprise.connectedapps.testapp.wrappers.ParcelableStringWrapper;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMultiset;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.ImmutableSortedMultiset;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -183,7 +195,6 @@ public class TestCrossProfileType {
             },
             TimeUnit.SECONDS.toMillis(secondsDelay));
   }
-
 
   @CrossProfile
   public void asyncVoidMethod(TestVoidCallbackListener callback) {
@@ -411,6 +422,56 @@ public class TestCrossProfileType {
     return m;
   }
 
+  @CrossProfile
+  public ImmutableSortedMap<String, String> identityImmutableSortedMapMethod(
+      ImmutableSortedMap<String, String> m) {
+    return m;
+  }
+
+  @CrossProfile
+  public ImmutableMultimap<String, String> identityImmutableMultimapMethod(
+      ImmutableMultimap<String, String> m) {
+    return m;
+  }
+
+  @CrossProfile
+  public ImmutableSetMultimap<String, String> identityImmutableSetMultimapMethod(
+      ImmutableSetMultimap<String, String> m) {
+    return m;
+  }
+
+  @CrossProfile
+  public ImmutableListMultimap<String, String> identityImmutableListMultimapMethod(
+      ImmutableListMultimap<String, String> m) {
+    return m;
+  }
+
+  @CrossProfile
+  public ImmutableList<String> identityImmutableListMethod(ImmutableList<String> l) {
+    return l;
+  }
+
+  @CrossProfile
+  public ImmutableSet<String> identityImmutableSetMethod(ImmutableSet<String> s) {
+    return s;
+  }
+
+  @CrossProfile
+  public ImmutableSortedSet<String> identityImmutableSortedSetMethod(ImmutableSortedSet<String> s) {
+    return s;
+  }
+
+  @CrossProfile
+  public ImmutableMultiset<String> identityImmutableMultisetMethod(ImmutableMultiset<String> s) {
+    return s;
+  }
+
+  @CrossProfile
+  public ImmutableSortedMultiset<String> identityImmutableSortedMultisetMethod(
+      ImmutableSortedMultiset<String> s) {
+    return s;
+  }
+
   // @CrossProfile
   // public TestProto identityProtoMethod(TestProto p) {
   //   return p;
@@ -424,6 +485,17 @@ public class TestCrossProfileType {
   @CrossProfile
   public Collection<String> identityCollectionMethod(Collection<String> c) {
     return c;
+  }
+
+  @CrossProfile
+  public ImmutableCollection<String> identitySortedCollectionMethod(ImmutableCollection<String> c) {
+    return c;
+  }
+
+  @CrossProfile
+  public ImmutableBiMap<String, String> identityImmutableBiMapMethod(
+      ImmutableBiMap<String, String> m) {
+    return m;
   }
 
   @CrossProfile
@@ -596,8 +668,7 @@ public class TestCrossProfileType {
   }
 
   @CrossProfile
-  public String identityStringMethodThrowsIOException(String s)
-      throws IOException {
+  public String identityStringMethodThrowsIOException(String s) throws IOException {
     throw new IOException("Requested to throw");
   }
 
@@ -702,5 +773,14 @@ public class TestCrossProfileType {
   @CrossProfile
   public Drawable identityDrawableMethod(Drawable d) {
     return d;
+  }
+
+  public static int cacheableMethodCalls = 0;
+
+  @CrossProfile
+  @Cacheable
+  public int getCacheableData() {
+    cacheableMethodCalls++;
+    return 123;
   }
 }

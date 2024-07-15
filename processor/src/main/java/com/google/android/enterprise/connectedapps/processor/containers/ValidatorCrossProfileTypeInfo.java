@@ -46,6 +46,8 @@ public abstract class ValidatorCrossProfileTypeInfo {
 
   public abstract ImmutableCollection<TypeElement> futureWrapperClasses();
 
+  public abstract ImmutableCollection<TypeElement> additionalUsedTypes();
+
   public abstract boolean isStatic();
 
   public static ValidatorCrossProfileTypeInfo create(
@@ -82,6 +84,7 @@ public abstract class ValidatorCrossProfileTypeInfo {
         supportedTypes,
         annotationInfo.parcelableWrapperClasses(),
         annotationInfo.futureWrapperClasses(),
+        annotationInfo.additionalUsedTypes(),
         annotationInfo.isStatic());
   }
 

@@ -51,4 +51,11 @@ public @interface CustomUserConnector {
    * <p>By default, this will require that a user be running, unlocked, and not in quiet mode.
    */
   AvailabilityRestrictions availabilityRestrictions() default AvailabilityRestrictions.DEFAULT;
+
+  /**
+   * A list of additional used types
+   *
+   * <p>This argument can only be passed when annotating types, not methods.
+   */
+  Class<?>[] additionalUsedTypes() default {};
 }

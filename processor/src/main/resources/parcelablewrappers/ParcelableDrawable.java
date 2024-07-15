@@ -30,7 +30,7 @@ import com.google.android.enterprise.connectedapps.internal.BundlerType;
  *
  * <p>Note that all {@link Drawable} instances are converted to {@link Bitmap} when parcelling.
  */
-public class ParcelableDrawable implements Parcelable {
+public final class ParcelableDrawable implements Parcelable {
 
   private static final int NULL = -1;
   private static final int NOT_NULL = 1;

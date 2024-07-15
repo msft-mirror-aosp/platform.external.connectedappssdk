@@ -25,11 +25,13 @@ class SharedTypeCodeGenerator {
   private boolean generated = false;
   private final InterfaceGenerator interfaceGenerator;
   private final CurrentProfileGenerator currentProfileGenerator;
+  private final OtherProfileCacheableGenerator otherProfileCacheableGenerator;
   private final OtherProfileGenerator otherProfileGenerator;
   private final IfAvailableGenerator ifAvailableGenerator;
   private final AlwaysThrowsGenerator alwaysThrowsGenerator;
   private final InternalCrossProfileClassGenerator internalCrossProfileClassGenerator;
   private final BundlerGenerator bundlerGenerator;
+  private final CrossProfileTypeInfo crossProfileType;
 
   public SharedTypeCodeGenerator(
       GeneratorContext generatorContext,
@@ -37,8 +39,11 @@ class SharedTypeCodeGenerator {
       CrossProfileTypeInfo crossProfileType) {
     checkNotNull(generatorContext);
     checkNotNull(crossProfileType);
+    this.crossProfileType = crossProfileType;
     this.interfaceGenerator = new InterfaceGenerator(generatorContext, crossProfileType);
     this.currentProfileGenerator = new CurrentProfileGenerator(generatorContext, crossProfileType);
+    this.otherProfileCacheableGenerator =
+        new OtherProfileCacheableGenerator(generatorContext, crossProfileType);
     this.otherProfileGenerator = new OtherProfileGenerator(generatorContext, crossProfileType);
     this.ifAvailableGenerator = new IfAvailableGenerator(generatorContext, crossProfileType);
     this.alwaysThrowsGenerator = new AlwaysThrowsGenerator(generatorContext, crossProfileType);
@@ -60,5 +65,8 @@ class SharedTypeCodeGenerator {
     alwaysThrowsGenerator.generate();
     internalCrossProfileClassGenerator.generate();
     bundlerGenerator.generate();
+    if (crossProfileType.hasCacheableMethod()) {
+      otherProfileCacheableGenerator.generate();
+    }
   }
 }

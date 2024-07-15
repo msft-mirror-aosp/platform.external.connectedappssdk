@@ -17,6 +17,7 @@ package com.google.android.enterprise.connectedapps.processor.containers;
 
 import static java.util.stream.Collectors.toCollection;
 
+import com.google.android.enterprise.connectedapps.annotations.Cacheable;
 import com.google.android.enterprise.connectedapps.annotations.CrossProfile;
 import com.google.android.enterprise.connectedapps.processor.ProcessorConfiguration;
 import com.google.android.enterprise.connectedapps.processor.SupportedTypes;
@@ -65,6 +66,16 @@ public abstract class CrossProfileTypeInfo {
   }
 
   /**
+   * Checks if there are any cacheable methods on this cross-profile type.
+   *
+   * <p>Where cacheable methods are methods annotated with {@link Cacheable} indicating that the
+   * result of a cross-profile call of that method should be cached.
+   */
+  public boolean hasCacheableMethod() {
+    return crossProfileMethods().stream().anyMatch(CrossProfileMethodInfo::isCacheable);
+  }
+
+  /**
    * Get a numeric identifier for the cross-profile type.
    *
    * <p>This identifier is based on the type's qualified name, and will not change between runs.
@@ -76,6 +87,7 @@ public abstract class CrossProfileTypeInfo {
         .asLong();
   }
 
+  @SuppressWarnings("CheckReturnValue") // extract classes from annotation is incorrectly flagged
   public static CrossProfileTypeInfo create(
       ValidatorContext context, ValidatorCrossProfileTypeInfo crossProfileType) {
     TypeElement crossProfileTypeElement = crossProfileType.crossProfileTypeElement();
@@ -92,7 +104,8 @@ public abstract class CrossProfileTypeInfo {
 
     SupportedTypes.Builder supportedTypesBuilder = crossProfileType.supportedTypes().asBuilder();
 
-    supportedTypesBuilder.filterUsed(context, crossProfileMethods);
+    supportedTypesBuilder.filterUsed(
+        context, crossProfileMethods, crossProfileType.additionalUsedTypes());
 
     if (ProcessorConfiguration.GENERATE_TYPE_SPECIFIC_WRAPPERS) {
       supportedTypesBuilder.replaceWrapperPrefix(

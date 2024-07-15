@@ -115,7 +115,25 @@ public class CrossProfileSupportedReturnTypeTest {
           TypeWithReturnValue.referenceType(
               "com.google.common.util.concurrent.ListenableFuture<java.util.List<String>>"),
           TypeWithReturnValue.referenceType(
+              "com.google.common.collect.ImmutableCollection<String>"),
+          TypeWithReturnValue.referenceType(
               "com.google.common.collect.ImmutableMap<String, String>"),
+          TypeWithReturnValue.referenceType(
+              "com.google.common.collect.ImmutableSortedMap<String, String>"),
+          TypeWithReturnValue.referenceType(
+              "com.google.common.collect.ImmutableMultimap<String, String>"),
+          TypeWithReturnValue.referenceType(
+              "com.google.common.collect.ImmutableSetMultimap<String, String>"),
+          TypeWithReturnValue.referenceType(
+              "com.google.common.collect.ImmutableListMultimap<String, String>"),
+          TypeWithReturnValue.referenceType("com.google.common.collect.ImmutableList<String>"),
+          TypeWithReturnValue.referenceType("com.google.common.collect.ImmutableSet<String>"),
+          TypeWithReturnValue.referenceType("com.google.common.collect.ImmutableSortedSet<String>"),
+          TypeWithReturnValue.referenceType("com.google.common.collect.ImmutableMultiset<String>"),
+          TypeWithReturnValue.referenceType(
+              "com.google.common.collect.ImmutableSortedMultiset<String>"),
+          TypeWithReturnValue.referenceType(
+              "com.google.common.collect.ImmutableBiMap<String, String>"),
           TypeWithReturnValue.referenceType("android.util.Pair<String, Integer>"),
           TypeWithReturnValue.referenceType("com.google.common.base.Optional<ParcelableObject>"),
           TypeWithReturnValue.referenceType("android.graphics.Bitmap"),

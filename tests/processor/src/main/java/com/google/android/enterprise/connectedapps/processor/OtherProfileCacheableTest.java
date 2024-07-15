@@ -18,6 +18,7 @@ package com.google.android.enterprise.connectedapps.processor;
 import static com.google.android.enterprise.connectedapps.processor.TestUtilities.NOTES_PACKAGE;
 import static com.google.android.enterprise.connectedapps.processor.TestUtilities.annotatedNotesCrossProfileType;
 import static com.google.android.enterprise.connectedapps.processor.TestUtilities.annotatedNotesProvider;
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 
@@ -26,6 +27,7 @@ import com.google.android.enterprise.connectedapps.processor.annotationdiscovery
 import com.google.android.enterprise.connectedapps.processor.annotationdiscovery.AnnotationStrings;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import java.util.Optional;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,11 +35,11 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class OtherProfileTest {
+public final class OtherProfileCacheableTest {
 
   private final AnnotationPrinter annotationPrinter;
 
-  public OtherProfileTest(AnnotationPrinter annotationPrinter) {
+  public OtherProfileCacheableTest(AnnotationPrinter annotationPrinter) {
     this.annotationPrinter = annotationPrinter;
   }
 
@@ -47,49 +49,31 @@ public class OtherProfileTest {
   }
 
   @Test
-  public void compile_generatesOtherProfileClass() {
+  public void compile_generatesOtherProfileCacheableClass() {
+    JavaFileObject notesType =
+        JavaFileObjects.forSourceLines(
+            NOTES_PACKAGE + ".NotesType",
+            "package " + NOTES_PACKAGE + ";",
+            "import com.google.android.enterprise.connectedapps.annotations.Cacheable;",
+            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
+            "public final class NotesType {",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  @Cacheable",
+            "  public int countNotes() {",
+            "    return 1;",
+            "  }",
+            "}");
+
     Compilation compilation =
         javac()
             .withProcessors(new Processor())
-            .compile(
-                annotatedNotesProvider(annotationPrinter),
-                annotatedNotesCrossProfileType(annotationPrinter));
+            .compile(notesType, annotatedNotesProvider(annotationPrinter));
 
-    assertThat(compilation).generatedSourceFile(NOTES_PACKAGE + ".NotesType_OtherProfile");
+    assertThat(compilation).generatedSourceFile(NOTES_PACKAGE + ".NotesType_OtherProfileCacheable");
   }
 
   @Test
-  public void compile_otherProfileClassImplementsSingleSender() {
-    Compilation compilation =
-        javac()
-            .withProcessors(new Processor())
-            .compile(
-                annotatedNotesProvider(annotationPrinter),
-                annotatedNotesCrossProfileType(annotationPrinter));
-
-    assertThat(compilation)
-        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_OtherProfile")
-        .contentsAsUtf8String()
-        .contains("class NotesType_OtherProfile implements NotesType_SingleSender");
-  }
-
-  @Test
-  public void compile_otherProfileClassHasConstructorTakingConnector() {
-    Compilation compilation =
-        javac()
-            .withProcessors(new Processor())
-            .compile(
-                annotatedNotesProvider(annotationPrinter),
-                annotatedNotesCrossProfileType(annotationPrinter));
-
-    assertThat(compilation)
-        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_OtherProfile")
-        .contentsAsUtf8String()
-        .contains("public NotesType_OtherProfile(ProfileConnector connector)");
-  }
-
-  @Test
-  public void compile_hasCacheableMethods_generatesUseCacheMethod() {
+  public void compile_otherProfileClassCacheableImplementsSingleSenderCanThrowCacheable() {
     JavaFileObject notesType =
         JavaFileObjects.forSourceLines(
             NOTES_PACKAGE + ".NotesType",
@@ -110,33 +94,25 @@ public class OtherProfileTest {
             .compile(notesType, annotatedNotesProvider(annotationPrinter));
 
     assertThat(compilation)
-        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_OtherProfile")
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_OtherProfileCacheable")
         .contentsAsUtf8String()
-        .contains("public NotesType_SingleSenderCanThrowCacheable useCache()");
+        .contains(
+            "class NotesType_OtherProfileCacheable implements "
+                + "NotesType_SingleSenderCanThrowCacheable");
   }
 
   @Test
-  public void compile_noCacheableMethods_doesNotGenerateUseCacheMethod() {
-    JavaFileObject notesType =
-        JavaFileObjects.forSourceLines(
-            NOTES_PACKAGE + ".NotesType",
-            "package " + NOTES_PACKAGE + ";",
-            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
-            "public final class NotesType {",
-            annotationPrinter.crossProfileAsAnnotation(),
-            "  public int countNotes() {",
-            "    return 1;",
-            "  }",
-            "}");
-
+  public void compile_noCacheableMethods_doesNotGenerateOtherProfileCacheableClass() {
     Compilation compilation =
         javac()
             .withProcessors(new Processor())
-            .compile(notesType, annotatedNotesProvider(annotationPrinter));
+            .compile(
+                annotatedNotesProvider(annotationPrinter),
+                annotatedNotesCrossProfileType(annotationPrinter));
 
-    assertThat(compilation)
-        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_OtherProfile")
-        .contentsAsUtf8String()
-        .doesNotContain("public NotesType_SingleSenderCanThrowCacheable useCache()");
+    Optional<JavaFileObject> otherProfileCacheableClass =
+        compilation.generatedSourceFile(NOTES_PACKAGE + ".NotesType_OtherProfileCacheable");
+
+    assertThat(otherProfileCacheableClass).isEmpty();
   }
 }

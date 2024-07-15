@@ -27,6 +27,8 @@ import static org.robolectric.annotation.LooperMode.Mode.LEGACY;
 import android.app.Application;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.UserHandle;
@@ -158,7 +160,7 @@ public class CrossProfileSenderTest {
                 AvailabilityRestrictions.DEFAULT));
   }
 
-    @Test
+  @Test
   public void construct_nullTimeoutExecutor_throwsNullPointerException() {
     assertThrows(
         NullPointerException.class,
@@ -186,6 +188,58 @@ public class CrossProfileSenderTest {
                 availabilityListener,
                 scheduledExecutorService,
                 /* availabilityRestrictions= */ null));
+  }
+
+  @Test
+  public void nullBinderIntent_throwsException() {
+    ConnectionBinder nullIntentBinder =
+        new AbstractProfileBinder() {
+          @Override
+          protected Intent createIntent(Context context, ComponentName componentName) {
+            return null;
+          }
+        };
+
+    CrossProfileSender sender =
+        new CrossProfileSender(
+            context,
+            TEST_SERVICE_CLASS_NAME,
+            nullIntentBinder,
+            connectionListener,
+            availabilityListener,
+            scheduledExecutorService,
+            AvailabilityRestrictions.DEFAULT);
+
+    int crossProfileTypeIdentifier = 1;
+    int methodIdentifier = 0;
+    Bundle params = new Bundle(Bundler.class.getClassLoader());
+
+    assertThrows(
+        UnavailableProfileException.class,
+        () -> sender.call(crossProfileTypeIdentifier, methodIdentifier, params));
+  }
+
+  @Test
+  public void connectionBinderException() {
+    ConnectionBinder throwsIntentBinder =
+        new AbstractProfileBinder() {
+          @Override
+          protected Intent createIntent(Context context, ComponentName componentName) {
+            throw new NullPointerException("ConnectionBinder throws NPE");
+          }
+        };
+
+    CrossProfileSender sender =
+        new CrossProfileSender(
+            context,
+            TEST_SERVICE_CLASS_NAME,
+            throwsIntentBinder,
+            connectionListener,
+            availabilityListener,
+            scheduledExecutorService,
+            AvailabilityRestrictions.DEFAULT);
+
+    assertThrows(NullPointerException.class, () -> sender.addConnectionHolder(this));
   }
 
   // Other manuallyBind tests are covered in Instrumented ConnectTest because Robolectric doesn't
@@ -459,7 +513,7 @@ public class CrossProfileSenderTest {
 
   @Test
   public void createMultipleSenders_workProfileBecomesAvailable_callsAvailabilityListenerForEachSender() {
-    CrossProfileSender sender2 =
+    CrossProfileSender unusedSender2 =
         new CrossProfileSender(
             context,
             TEST_SERVICE_CLASS_NAME,
@@ -506,6 +560,32 @@ public class CrossProfileSenderTest {
                 },
                 connectionHolderAlias),
         testUtilities::simulateDisconnectingServiceConnection);
+  }
+
+  // Regression test for b/292471207
+  @Test
+  public void concurrentAvailabilityBroadcastAndCreateCrossProfileSender_doesntCrash()
+      throws Exception {
+    tryForceRaceCondition(
+        1000,
+        () -> {
+          // This will cause CrossProfileSender to iterate through its list of senders.
+          testUtilities.turnOffWorkProfile();
+          testUtilities.turnOnWorkProfile();
+        },
+        () -> {
+          // We don't care about the return value here, just that creating a cross profile
+          // sender modifies its global set of senders.
+          var unused =
+              new CrossProfileSender(
+                  context,
+                  TEST_SERVICE_CLASS_NAME,
+                  new DpcProfileBinder(new ComponentName("A", "B")),
+                  connectionListener,
+                  availabilityListener,
+                  scheduledExecutorService,
+                  AvailabilityRestrictions.DEFAULT);
+        });
   }
 
   private void initWithDpcBinding() {

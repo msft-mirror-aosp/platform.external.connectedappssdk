@@ -24,7 +24,7 @@ import com.google.android.enterprise.connectedapps.internal.BundlerType;
 /** Wrapper for reading & writing {@link Bitmap} instances from and to {@link Parcel} instances. */
 // Though Bitmap is itself Parcelable, in some circumstances the Parcelling process can fail (see
 // b/159895007).
-public class ParcelableBitmap implements Parcelable {
+public final class ParcelableBitmap implements Parcelable {
   private final Bitmap bitmap;
 
   /** Create a wrapper for a given bitmap. */

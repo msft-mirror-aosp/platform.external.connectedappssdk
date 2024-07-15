@@ -101,6 +101,23 @@ final class FakeOtherGenerator {
             .addStatement("return new $T(this)", ifAvailableClass)
             .build());
 
+    ClassName singleSenderCanThrowCacheableInterface =
+        InterfaceGenerator.getSingleSenderCanThrowCacheableInterfaceClassName(
+            generatorContext, crossProfileType);
+    ClassName fakeOtherCacheableClass =
+        FakeOtherCacheableGenerator.getFakeOtherCacheableClassName(
+            generatorContext, crossProfileType);
+
+    if (crossProfileType.hasCacheableMethod()) {
+      classBuilder.addMethod(
+          MethodSpec.methodBuilder("useCache")
+              .addAnnotation(Override.class)
+              .addModifiers(Modifier.PUBLIC)
+              .returns(singleSenderCanThrowCacheableInterface)
+              .addStatement("return new $T(this)", fakeOtherCacheableClass)
+              .build());
+    }
+
     for (CrossProfileMethodInfo method : crossProfileType.crossProfileMethods()) {
       if (method.isBlocking(generatorContext, crossProfileType)) {
         generateBlockingMethodOnFakeOther(classBuilder, method, crossProfileType);

@@ -108,7 +108,14 @@ abstract class BundleCallSender {
       throws RemoteException {
     while (true) {
       try {
-        return call(callId, blockId, bytes);
+        byte[] returnBytes = call(callId, blockId, bytes);
+        if (returnBytes == null || returnBytes.length == 0) {
+          Log.w(
+              LOG_TAG,
+              String.format(
+                  "Call returned null or empty bytes from %s", super.getClass().getName()));
+        }
+        return returnBytes;
       } catch (TransactionTooLargeException e) {
         if (retries-- <= 0) {
           throw e;
@@ -209,7 +216,11 @@ abstract class BundleCallSender {
 
     byte[] returnBytes = makeParcelCall(callIdentifier, bytes);
 
+    if (returnBytes == null) {
+      throw new IllegalStateException("Return bytes are null");
+    }
     if (returnBytes.length == 0) {
+      Log.w(LOG_TAG, "Return bytes are empty");
       return null;
     }
 

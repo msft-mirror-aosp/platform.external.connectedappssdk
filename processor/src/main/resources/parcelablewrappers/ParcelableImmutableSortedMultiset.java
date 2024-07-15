@@ -19,77 +19,85 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.common.collect.ImmutableSortedMultiset;
 
-/** Wrapper for reading & writing {@link Set} instances from and to {@link Parcel} instances. */
-public final class ParcelableSet<E> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableSortedMultiset} instances from and to {@link
+ * Parcel} instances.
+ */
+public final class ParcelableImmutableSortedMultiset<E extends Comparable> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Set<E> set;
+  private final ImmutableSortedMultiset<E> sortedMultiset;
 
   /**
-   * Create a wrapper for a given set.
+   * Create a wrapper for a given immutable sorted set.
    *
-   * <p>The passed in {@link Bundler} must be capable of bundling {@code F}.
+   * <p>The passed in {@link Bundler} must be capable of bundling {@code E}
    */
-  public static <F> ParcelableSet<F> of(Bundler bundler, BundlerType type, Set<F> set) {
-    return new ParcelableSet<>(bundler, type, set);
+  public static <E extends Comparable> ParcelableImmutableSortedMultiset<E> of(
+      Bundler bundler, BundlerType type, ImmutableSortedMultiset<E> sortedMultiset) {
+    return new ParcelableImmutableSortedMultiset<E>(bundler, type, sortedMultiset);
   }
 
-  public Set<E> get() {
-    return set;
+  public ImmutableSortedMultiset<E> get() {
+    return sortedMultiset;
   }
 
-  private ParcelableSet(Bundler bundler, BundlerType type, Set<E> set) {
+  private ParcelableImmutableSortedMultiset(
+      Bundler bundler, BundlerType type, ImmutableSortedMultiset<E> sortedMultiset) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
     this.bundler = bundler;
     this.type = type;
-    this.set = set;
+    this.sortedMultiset = sortedMultiset;
   }
 
-  private ParcelableSet(Parcel in) {
+  private ParcelableImmutableSortedMultiset(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
     if (size == NULL_SIZE) {
       type = null;
-      set = null;
+      sortedMultiset = null;
       return;
     }
 
-    set = new HashSet<>();
+    ImmutableSortedMultiset.Builder<E> sortedMultisetBuilder =
+        ImmutableSortedMultiset.naturalOrder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType valueType = type.typeArguments().get(0);
+      BundlerType elementType = type.typeArguments().get(0);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
-        E value = (E) bundler.readFromParcel(in, valueType);
-        set.add(value);
+        E element = (E) bundler.readFromParcel(in, elementType);
+        sortedMultisetBuilder.add(element);
       }
     }
+
+    sortedMultiset = sortedMultisetBuilder.build();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(bundler, flags);
 
-    if (set == null) {
+    if (sortedMultiset == null) {
       dest.writeInt(NULL_SIZE);
       return;
     }
 
-    dest.writeInt(set.size());
+    dest.writeInt(sortedMultiset.size());
     dest.writeParcelable(type, flags);
-    if (!set.isEmpty()) {
+    if (!sortedMultiset.isEmpty()) {
       BundlerType valueType = type.typeArguments().get(0);
 
-      for (E value : set) {
+      for (E value : sortedMultiset) {
         bundler.writeToParcel(dest, value, valueType, flags);
       }
     }
@@ -101,16 +109,16 @@ public final class ParcelableSet<E> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableSet> CREATOR =
-      new Creator<ParcelableSet>() {
+  public static final Creator<ParcelableImmutableSortedMultiset> CREATOR =
+      new Creator<ParcelableImmutableSortedMultiset>() {
         @Override
-        public ParcelableSet createFromParcel(Parcel in) {
-          return new ParcelableSet(in);
+        public ParcelableImmutableSortedMultiset createFromParcel(Parcel in) {
+          return new ParcelableImmutableSortedMultiset(in);
         }
 
         @Override
-        public ParcelableSet[] newArray(int size) {
-          return new ParcelableSet[size];
+        public ParcelableImmutableSortedMultiset[] newArray(int size) {
+          return new ParcelableImmutableSortedMultiset[size];
         }
       };
 }

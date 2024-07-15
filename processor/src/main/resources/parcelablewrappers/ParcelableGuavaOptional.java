@@ -24,7 +24,7 @@ import com.google.common.base.Optional;
 /**
  * Wrapper for reading & writing {@link Optional} instances from and to {@link Parcel} instances.
  */
-public class ParcelableGuavaOptional<E> implements Parcelable {
+public final class ParcelableGuavaOptional<E> implements Parcelable {
 
   private static final int NULL = -1;
   private static final int ABSENT = 0;

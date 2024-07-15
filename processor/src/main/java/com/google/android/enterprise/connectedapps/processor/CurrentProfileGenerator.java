@@ -72,6 +72,9 @@ final class CurrentProfileGenerator {
     ClassName singleSenderCanThrowInterface =
         InterfaceGenerator.getSingleSenderCanThrowInterfaceClassName(
             generatorContext, crossProfileType);
+    ClassName singleSenderCanThrowCacheableInterface =
+        InterfaceGenerator.getSingleSenderCanThrowCacheableInterfaceClassName(
+            generatorContext, crossProfileType);
 
     TypeSpec.Builder classBuilder =
         TypeSpec.classBuilder(className)
@@ -109,6 +112,19 @@ final class CurrentProfileGenerator {
             .returns(ifAvailableClass)
             .addStatement("return new $T(this)", ifAvailableClass)
             .build());
+
+    if (crossProfileType.hasCacheableMethod()) {
+      classBuilder.addMethod(
+          MethodSpec.methodBuilder("useCache")
+              .addAnnotation(Override.class)
+              .addModifiers(Modifier.PUBLIC)
+              .returns(singleSenderCanThrowCacheableInterface)
+              .addStatement(
+                  "throw new $T($S)",
+                  IllegalStateException.class,
+                  "Results of calls to the current profile can't be cached")
+              .build());
+    }
 
     generatorUtilities.writeClassToFile(className.packageName(), classBuilder);
   }

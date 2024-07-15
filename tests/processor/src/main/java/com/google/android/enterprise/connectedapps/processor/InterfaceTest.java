@@ -143,6 +143,162 @@ public class InterfaceTest {
   }
 
   @Test
+  public void compile_generatesSingleSenderCanThrowCacheableInterface() {
+    JavaFileObject notesType =
+        JavaFileObjects.forSourceLines(
+            NOTES_PACKAGE + ".NotesType",
+            "package " + NOTES_PACKAGE + ";",
+            "import com.google.android.enterprise.connectedapps.annotations.Cacheable;",
+            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
+            "public final class NotesType {",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  @Cacheable",
+            "  public int countNotes() {",
+            "    return 1;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        javac()
+            .withProcessors(new Processor())
+            .compile(notesType, annotatedNotesProvider(annotationPrinter));
+
+    assertThat(compilation)
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_SingleSenderCanThrowCacheable");
+  }
+
+  @Test
+  public void compile_generatesSingleSenderCanThrowCacheableInterfaceWithCorrectJavadoc() {
+    JavaFileObject notesType =
+        JavaFileObjects.forSourceLines(
+            NOTES_PACKAGE + ".NotesType",
+            "package " + NOTES_PACKAGE + ";",
+            "import com.google.android.enterprise.connectedapps.annotations.Cacheable;",
+            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
+            "public final class NotesType {",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  @Cacheable",
+            "  public int countNotes() {",
+            "    return 1;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        javac()
+            .withProcessors(new Processor())
+            .compile(notesType, annotatedNotesProvider(annotationPrinter));
+
+    assertThat(compilation)
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_SingleSenderCanThrowCacheable")
+        .contentsAsUtf8String()
+        .contains(
+            "Interface used for caching the results and interacting with the cached results"
+                + " of cross-profile calls.");
+  }
+
+  @Test
+  public void
+      compile_multipleAnnotatedMethods_singleSenderCanThrowCacheableInterfaceHasAllMethods() {
+    JavaFileObject notesType =
+        JavaFileObjects.forSourceLines(
+            NOTES_PACKAGE + ".NotesType",
+            "package " + NOTES_PACKAGE + ";",
+            "import com.google.android.enterprise.connectedapps.annotations.Cacheable;",
+            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
+            "public final class NotesType {",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  @Cacheable",
+            "  public int countNotes() {",
+            "     return 1;",
+            "  }",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  @Cacheable",
+            "  public int anotherMethod() {",
+            "    return 0;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        javac()
+            .withProcessors(new Processor())
+            .compile(notesType, annotatedNotesProvider(annotationPrinter));
+
+    assertThat(compilation)
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_SingleSenderCanThrowCacheable")
+        .contentsAsUtf8String()
+        .contains("int countNotes()");
+
+    assertThat(compilation)
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_SingleSenderCanThrowCacheable")
+        .contentsAsUtf8String()
+        .contains("int anotherMethod()");
+  }
+
+  @Test
+  public void compile_singleSenderCanThrowCacheableInterfaceHasMethodWithCorrectJavadoc() {
+    JavaFileObject notesType =
+        JavaFileObjects.forSourceLines(
+            NOTES_PACKAGE + ".NotesType",
+            "package " + NOTES_PACKAGE + ";",
+            "import com.google.android.enterprise.connectedapps.annotations.Cacheable;",
+            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
+            "public final class NotesType {",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  @Cacheable",
+            "  public int countNotes() {",
+            "     return 1;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        javac()
+            .withProcessors(new Processor())
+            .compile(notesType, annotatedNotesProvider(annotationPrinter));
+
+    assertThat(compilation)
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_SingleSenderCanThrowCacheable")
+        .contentsAsUtf8String()
+        .contains(
+            "* Attempts to fetch the cached result of calling {@link NotesType#countNotes()} on the"
+                + " given profile.\n"
+                + "   * If a result is not already in the cache, this will make a call to {@link"
+                + " NotesType#countNotes()} on the given profile.\n"
+                + "   *\n"
+                + "   * @see NotesType#countNotes()\n");
+  }
+
+  @Test
+  public void
+      compile_multipleMethods_singleSenderCanThrowCacheableInterfaceDoesNotHaveUnannotatedMethods() {
+    JavaFileObject notesType =
+        JavaFileObjects.forSourceLines(
+            NOTES_PACKAGE + ".NotesType",
+            "package " + NOTES_PACKAGE + ";",
+            "import com.google.android.enterprise.connectedapps.annotations.Cacheable;",
+            "import " + annotationPrinter.crossProfileQualifiedName() + ";",
+            "public final class NotesType {",
+            annotationPrinter.crossProfileAsAnnotation(),
+            "  @Cacheable",
+            "  public int countNotes() {",
+            "    return 1;",
+            "  }",
+            "  public int anotherMethod(String s) {",
+            "    return 0;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        javac()
+            .withProcessors(new Processor())
+            .compile(notesType, annotatedNotesProvider(annotationPrinter));
+
+    assertThat(compilation)
+        .generatedSourceFile(NOTES_PACKAGE + ".NotesType_SingleSenderCanThrowCacheable")
+        .contentsAsUtf8String()
+        .doesNotContain("anotherMethod");
+  }
+
+  @Test
   public void compile_generatesSingleSenderCanThrowInterface() {
     Compilation compilation =
         javac()

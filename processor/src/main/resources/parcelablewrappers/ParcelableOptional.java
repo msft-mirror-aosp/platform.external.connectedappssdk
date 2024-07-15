@@ -24,7 +24,7 @@ import java.util.Optional;
 /**
  * Wrapper for reading & writing {@link Optional} instances from and to {@link Parcel} instances.
  */
-public class ParcelableOptional<E> implements Parcelable {
+public final class ParcelableOptional<E> implements Parcelable {
 
   private static final int NULL = -1;
   private static final int ABSENT = 0;
