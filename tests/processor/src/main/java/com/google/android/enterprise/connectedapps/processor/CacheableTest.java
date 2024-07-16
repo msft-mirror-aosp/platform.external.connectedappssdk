@@ -25,7 +25,7 @@ public class CacheableTest {
   private static final String CACHEABLE_METHOD_RETURNS_VOID_ERROR =
       "Methods annotated with @Cacheable must return a non-void type";
   private static final String CACHEABLE_ANNOTATION_ON_NON_METHOD_ERROR =
-      "annotation type not applicable to this kind of declaration";
+      "annotation interface not applicable to this kind of declaration";
   private static final String CACHEABLE_METHOD_RETURNS_NON_SERIALIZABLE_ERROR =
       "Methods annotated with @Cacheable must return a type which implements Serializable, return"
           + " a future with a Serializable result or return void with a simple callback parameter.";
