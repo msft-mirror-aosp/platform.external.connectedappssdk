@@ -48,6 +48,7 @@ public abstract class AbstractProfileBinder implements ConnectionBinder {
   private static final String INTERACT_ACROSS_USERS = "android.permission.INTERACT_ACROSS_USERS";
   private static final String INTERACT_ACROSS_USERS_FULL =
       "android.permission.INTERACT_ACROSS_USERS_FULL";
+  private static final String TAG = "AbstractProfileBinder";
 
   protected abstract Intent createIntent(Context context, ComponentName bindToService);
 
@@ -67,6 +68,10 @@ public abstract class AbstractProfileBinder implements ConnectionBinder {
     }
 
     Intent bindIntent = createIntent(context, bindToService);
+    if (bindIntent == null) {
+      Log.e(TAG, "Unable to create bind Intent");
+      return false;
+    }
 
     boolean hasBound =
         ReflectionUtilities.bindServiceAsUser(context, bindIntent, connection, otherUserHandle);
@@ -132,7 +137,7 @@ public abstract class AbstractProfileBinder implements ConnectionBinder {
         }
       }
     } catch (NameNotFoundException e) {
-      Log.e("AbstractProfileBinder", "Could not find package.", e);
+      Log.e(TAG, "Could not find package.", e);
       requestsInteractAcrossProfiles = false;
       requestsInteractAcrossUsers = false;
       requestsInteractAcrossUsersFull = false;
