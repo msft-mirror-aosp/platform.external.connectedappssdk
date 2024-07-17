@@ -19,77 +19,84 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.common.collect.ImmutableSortedSet;
 
-/** Wrapper for reading & writing {@link Set} instances from and to {@link Parcel} instances. */
-public final class ParcelableSet<E> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableSortedSet} instances from and to {@link Parcel}
+ * instances.
+ */
+public final class ParcelableImmutableSortedSet<E extends Comparable> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Set<E> set;
+  private final ImmutableSortedSet<E> sortedSet;
 
   /**
-   * Create a wrapper for a given set.
+   * Create a wrapper for a given immutable sorted set.
    *
-   * <p>The passed in {@link Bundler} must be capable of bundling {@code F}.
+   * <p>The passed in {@link Bundler} must be capable of bundling {@code E}
    */
-  public static <F> ParcelableSet<F> of(Bundler bundler, BundlerType type, Set<F> set) {
-    return new ParcelableSet<>(bundler, type, set);
+  public static <E extends Comparable> ParcelableImmutableSortedSet<E> of(
+      Bundler bundler, BundlerType type, ImmutableSortedSet<E> sortedSet) {
+    return new ParcelableImmutableSortedSet<E>(bundler, type, sortedSet);
   }
 
-  public Set<E> get() {
-    return set;
+  public ImmutableSortedSet<E> get() {
+    return sortedSet;
   }
 
-  private ParcelableSet(Bundler bundler, BundlerType type, Set<E> set) {
+  private ParcelableImmutableSortedSet(
+      Bundler bundler, BundlerType type, ImmutableSortedSet<E> sortedSet) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
     this.bundler = bundler;
     this.type = type;
-    this.set = set;
+    this.sortedSet = sortedSet;
   }
 
-  private ParcelableSet(Parcel in) {
+  private ParcelableImmutableSortedSet(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
     if (size == NULL_SIZE) {
       type = null;
-      set = null;
+      sortedSet = null;
       return;
     }
 
-    set = new HashSet<>();
+    ImmutableSortedSet.Builder<E> sortedSetBuilder = ImmutableSortedSet.naturalOrder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType valueType = type.typeArguments().get(0);
+      BundlerType elementType = type.typeArguments().get(0);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
-        E value = (E) bundler.readFromParcel(in, valueType);
-        set.add(value);
+        E element = (E) bundler.readFromParcel(in, elementType);
+        sortedSetBuilder.add(element);
       }
     }
+
+    sortedSet = sortedSetBuilder.build();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(bundler, flags);
 
-    if (set == null) {
+    if (sortedSet == null) {
       dest.writeInt(NULL_SIZE);
       return;
     }
 
-    dest.writeInt(set.size());
+    dest.writeInt(sortedSet.size());
     dest.writeParcelable(type, flags);
-    if (!set.isEmpty()) {
+    if (!sortedSet.isEmpty()) {
       BundlerType valueType = type.typeArguments().get(0);
 
-      for (E value : set) {
+      for (E value : sortedSet) {
         bundler.writeToParcel(dest, value, valueType, flags);
       }
     }
@@ -101,16 +108,16 @@ public final class ParcelableSet<E> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableSet> CREATOR =
-      new Creator<ParcelableSet>() {
+  public static final Creator<ParcelableImmutableSortedSet> CREATOR =
+      new Creator<ParcelableImmutableSortedSet>() {
         @Override
-        public ParcelableSet createFromParcel(Parcel in) {
-          return new ParcelableSet(in);
+        public ParcelableImmutableSortedSet createFromParcel(Parcel in) {
+          return new ParcelableImmutableSortedSet(in);
         }
 
         @Override
-        public ParcelableSet[] newArray(int size) {
-          return new ParcelableSet[size];
+        public ParcelableImmutableSortedSet[] newArray(int size) {
+          return new ParcelableImmutableSortedSet[size];
         }
       };
 }
