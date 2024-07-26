@@ -23,6 +23,8 @@ public final class ExceptionThrower {
 
   private ExceptionThrower() {}
 
+  private static final int DELAY_MILLIS = 5000;
+
   private static class ThrowingRunnable implements Runnable {
     RuntimeException runtimeException;
     Error error;
@@ -45,12 +47,13 @@ public final class ExceptionThrower {
   /** Throw the given {@link RuntimeException} after a delay on the main looper. */
   public static void delayThrow(RuntimeException runtimeException) {
     // We add a small delay to ensure that the return can be completed before crashing
-    new Handler(Looper.getMainLooper()).postDelayed(new ThrowingRunnable(runtimeException), 1000);
+    new Handler(Looper.getMainLooper())
+        .postDelayed(new ThrowingRunnable(runtimeException), DELAY_MILLIS);
   }
 
   /** Throw the given {@link Error} after a delay on the main looper. */
   public static void delayThrow(Error error) {
     // We add a small delay to ensure that the return can be completed before crashing
-    new Handler(Looper.getMainLooper()).postDelayed(new ThrowingRunnable(error), 1000);
+    new Handler(Looper.getMainLooper()).postDelayed(new ThrowingRunnable(error), DELAY_MILLIS);
   }
 }

@@ -70,6 +70,9 @@ final class AlwaysThrowsGenerator {
     ClassName singleSenderCanThrowInterface =
         InterfaceGenerator.getSingleSenderCanThrowInterfaceClassName(
             generatorContext, crossProfileType);
+    ClassName singleSenderCanThrowCacheableInterface =
+        InterfaceGenerator.getSingleSenderCanThrowCacheableInterfaceClassName(
+            generatorContext, crossProfileType);
 
     TypeSpec.Builder classBuilder =
         TypeSpec.classBuilder(className)
@@ -102,6 +105,18 @@ final class AlwaysThrowsGenerator {
             .returns(ifAvailableClass)
             .addStatement("return new $T(this)", ifAvailableClass)
             .build());
+
+    if (crossProfileType.hasCacheableMethod()) {
+      classBuilder.addSuperinterface(singleSenderCanThrowCacheableInterface);
+
+      classBuilder.addMethod(
+          MethodSpec.methodBuilder("useCache")
+              .addAnnotation(Override.class)
+              .addModifiers(Modifier.PUBLIC)
+              .returns(singleSenderCanThrowCacheableInterface)
+              .addStatement("return new $T(this.errorMessage)", className)
+              .build());
+    }
 
     for (CrossProfileMethodInfo method : crossProfileType.crossProfileMethods()) {
       if (method.isBlocking(generatorContext, crossProfileType)) {

@@ -22,7 +22,7 @@ import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
 
 /** Wrapper for reading & writing {@link Pair} instances from and to {@link Parcel} instances. */
-public class ParcelablePair<F, S> implements Parcelable {
+public final class ParcelablePair<F, S> implements Parcelable {
 
   private static final int NULL = -1;
   private static final int NOT_NULL = 1;
