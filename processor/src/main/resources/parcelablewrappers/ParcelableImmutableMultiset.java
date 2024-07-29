@@ -19,77 +19,84 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.common.collect.ImmutableMultiset;
 
-/** Wrapper for reading & writing {@link Set} instances from and to {@link Parcel} instances. */
-public final class ParcelableSet<E> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableMultiset} instances from and to {@link Parcel}
+ * instances.
+ */
+public final class ParcelableImmutableMultiset<E> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Set<E> set;
+  private final ImmutableMultiset<E> multiset;
 
   /**
-   * Create a wrapper for a given set.
+   * Create a wrapper for a given immutable multiset.
    *
-   * <p>The passed in {@link Bundler} must be capable of bundling {@code F}.
+   * <p>The passed in {@link Bundler} must be capable of bundling {@code E}
    */
-  public static <F> ParcelableSet<F> of(Bundler bundler, BundlerType type, Set<F> set) {
-    return new ParcelableSet<>(bundler, type, set);
+  public static <E> ParcelableImmutableMultiset<E> of(
+      Bundler bundler, BundlerType type, ImmutableMultiset<E> multiset) {
+    return new ParcelableImmutableMultiset<>(bundler, type, multiset);
   }
 
-  public Set<E> get() {
-    return set;
+  public ImmutableMultiset<E> get() {
+    return multiset;
   }
 
-  private ParcelableSet(Bundler bundler, BundlerType type, Set<E> set) {
+  private ParcelableImmutableMultiset(
+      Bundler bundler, BundlerType type, ImmutableMultiset<E> multiset) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
     this.bundler = bundler;
     this.type = type;
-    this.set = set;
+    this.multiset = multiset;
   }
 
-  private ParcelableSet(Parcel in) {
+  private ParcelableImmutableMultiset(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
     if (size == NULL_SIZE) {
       type = null;
-      set = null;
+      multiset = null;
       return;
     }
 
-    set = new HashSet<>();
+    ImmutableMultiset.Builder<E> multisetBuilder = ImmutableMultiset.builder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType valueType = type.typeArguments().get(0);
+      BundlerType elementType = type.typeArguments().get(0);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
-        E value = (E) bundler.readFromParcel(in, valueType);
-        set.add(value);
+        E element = (E) bundler.readFromParcel(in, elementType);
+        multisetBuilder.add(element);
       }
     }
+
+    multiset = multisetBuilder.build();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(bundler, flags);
 
-    if (set == null) {
+    if (multiset == null) {
       dest.writeInt(NULL_SIZE);
       return;
     }
 
-    dest.writeInt(set.size());
+    dest.writeInt(multiset.size());
     dest.writeParcelable(type, flags);
-    if (!set.isEmpty()) {
+    if (!multiset.isEmpty()) {
       BundlerType valueType = type.typeArguments().get(0);
 
-      for (E value : set) {
+      for (E value : multiset) {
         bundler.writeToParcel(dest, value, valueType, flags);
       }
     }
@@ -101,16 +108,16 @@ public final class ParcelableSet<E> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableSet> CREATOR =
-      new Creator<ParcelableSet>() {
+  public static final Creator<ParcelableImmutableMultiset> CREATOR =
+      new Creator<ParcelableImmutableMultiset>() {
         @Override
-        public ParcelableSet createFromParcel(Parcel in) {
-          return new ParcelableSet(in);
+        public ParcelableImmutableMultiset createFromParcel(Parcel in) {
+          return new ParcelableImmutableMultiset(in);
         }
 
         @Override
-        public ParcelableSet[] newArray(int size) {
-          return new ParcelableSet[size];
+        public ParcelableImmutableMultiset[] newArray(int size) {
+          return new ParcelableImmutableMultiset[size];
         }
       };
 }
