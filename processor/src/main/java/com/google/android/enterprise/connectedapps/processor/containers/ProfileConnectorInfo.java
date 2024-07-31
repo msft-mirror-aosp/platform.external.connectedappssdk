@@ -48,6 +48,8 @@ public abstract class ProfileConnectorInfo {
 
     abstract ImmutableCollection<TypeElement> importsClasses();
 
+    abstract ImmutableCollection<TypeElement> additionalUsedTypes();
+
     abstract AvailabilityRestrictions availabilityRestrictions();
 
     abstract UncaughtExceptionsPolicy uncaughtExceptionsPolicy();
@@ -71,6 +73,8 @@ public abstract class ProfileConnectorInfo {
 
   public abstract ImmutableCollection<TypeElement> importsClasses();
 
+  public abstract ImmutableCollection<TypeElement> additionalUsedTypes();
+
   public abstract AvailabilityRestrictions availabilityRestrictions();
 
   public abstract UncaughtExceptionsPolicy uncaughtExceptionsPolicy();
@@ -84,12 +88,15 @@ public abstract class ProfileConnectorInfo {
 
     Set<TypeElement> parcelableWrappers = new HashSet<>(annotationInfo.parcelableWrapperClasses());
     Set<TypeElement> futureWrappers = new HashSet<>(annotationInfo.futureWrapperClasses());
+    Set<TypeElement> additionalUsedTypes =
+        new HashSet<>(annotationInfo.additionalUsedTypes());
 
     for (TypeElement importConnectorClass : annotationInfo.importsClasses()) {
       ProfileConnectorInfo importConnector =
           ProfileConnectorInfo.create(context, importConnectorClass, globalSupportedTypes);
       parcelableWrappers.addAll(importConnector.parcelableWrapperClasses());
       futureWrappers.addAll(importConnector.futureWrapperClasses());
+      additionalUsedTypes.addAll(importConnector.additionalUsedTypes());
     }
 
     return new AutoValue_ProfileConnectorInfo(
@@ -105,10 +112,12 @@ public abstract class ProfileConnectorInfo {
         ImmutableSet.copyOf(parcelableWrappers),
         ImmutableSet.copyOf(futureWrappers),
         annotationInfo.importsClasses(),
+        ImmutableSet.copyOf(additionalUsedTypes),
         annotationInfo.availabilityRestrictions(),
         annotationInfo.uncaughtExceptionsPolicy());
   }
 
+  @SuppressWarnings("CheckReturnValue") // extract classes from annotation is incorrectly flagged
   private static CustomProfileConnectorAnnotationInfo extractFromCustomProfileConnectorAnnotation(
       Context context, Elements elements, TypeElement connectorElement) {
     CustomProfileConnector customProfileConnector =
@@ -118,6 +127,7 @@ public abstract class ProfileConnectorInfo {
       return new AutoValue_ProfileConnectorInfo_CustomProfileConnectorAnnotationInfo(
           ProfileType.NONE,
           getDefaultServiceName(elements, connectorElement),
+          ImmutableSet.of(),
           ImmutableSet.of(),
           ImmutableSet.of(),
           ImmutableSet.of(),
@@ -134,6 +144,9 @@ public abstract class ProfileConnectorInfo {
     Collection<TypeElement> imports =
         GeneratorUtilities.extractClassesFromAnnotation(
             context.types(), customProfileConnector::imports);
+    Collection<TypeElement> additionalUsedTypes =
+        GeneratorUtilities.extractClassesFromAnnotation(
+            context.types(), customProfileConnector::additionalUsedTypes);
 
     String serviceClassName = customProfileConnector.serviceClassName();
 
@@ -145,6 +158,7 @@ public abstract class ProfileConnectorInfo {
         ImmutableSet.copyOf(parcelableWrappers),
         ImmutableSet.copyOf(futureWrappers),
         ImmutableSet.copyOf(imports),
+        ImmutableSet.copyOf(additionalUsedTypes),
         customProfileConnector.availabilityRestrictions(),
         customProfileConnector.uncaughtExceptionsPolicy());
   }
