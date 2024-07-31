@@ -53,6 +53,7 @@ import com.google.android.enterprise.connectedapps.processor.containers.Validato
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import com.google.common.collect.ImmutableList;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -102,6 +103,9 @@ public final class EarlyValidator {
       "@CROSS_PROFILE_ANNOTATION types must not be in the default package";
   private static final String NON_PUBLIC_CROSS_PROFILE_TYPE_ERROR =
       "@CROSS_PROFILE_ANNOTATION types must be public";
+  private static final String ADDITIONAL_TYPE_INVALID_TYPE_ERROR =
+      "The additional type %s cannot be used by used as a parameter for, or returned by methods"
+          + " annotated @CROSS_PROFILE_ANNOTATION";
   private static final String NOT_A_PROVIDER_CLASS_ERROR =
       "All classes specified in 'providers' must be provider classes";
   private static final String CONNECTOR_MUST_BE_INTERFACE = "Connectors must be interfaces";
@@ -517,7 +521,33 @@ public final class EarlyValidator {
             validatorContext.newProviderClasses());
 
     for (ValidatorCrossProfileTypeInfo crossProfileType : crossProfileTypes) {
-      isValid = validateCrossProfileType(crossProfileType) && isValid;
+      isValid =
+          validateCrossProfileType(crossProfileType)
+              && validateAdditionalUsedTypes(crossProfileType)
+              && isValid;
+    }
+
+    return isValid;
+  }
+
+  private boolean validateAdditionalUsedTypes(ValidatorCrossProfileTypeInfo crossProfileType) {
+    boolean isValid = true;
+    ImmutableList<TypeElement> additionalUsedTypes =
+        crossProfileType.additionalUsedTypes().asList();
+
+    for (TypeElement supportedType : additionalUsedTypes) {
+      if (!crossProfileType
+              .supportedTypes()
+              .isValidReturnType(supportedType.asType(), /* check generics */ false)
+          && !crossProfileType
+              .supportedTypes()
+              .isValidParameterType(supportedType.asType(), /* check generics */ false)) {
+
+        showError(
+            String.format(ADDITIONAL_TYPE_INVALID_TYPE_ERROR, supportedType.getSimpleName()),
+            supportedType);
+        isValid = false;
+      }
     }
 
     return isValid;
