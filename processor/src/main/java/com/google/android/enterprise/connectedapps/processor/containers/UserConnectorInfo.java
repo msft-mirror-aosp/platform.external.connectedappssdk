@@ -43,6 +43,8 @@ public abstract class UserConnectorInfo {
 
     abstract ImmutableCollection<TypeElement> importsClasses();
 
+    abstract ImmutableCollection<TypeElement> additionalUsedTypes();
+
     abstract AvailabilityRestrictions availabilityRestrictions();
   }
 
@@ -62,6 +64,8 @@ public abstract class UserConnectorInfo {
 
   public abstract ImmutableCollection<TypeElement> importsClasses();
 
+  public abstract ImmutableCollection<TypeElement> additionalUsedTypes();
+
   public abstract AvailabilityRestrictions availabilityRestrictions();
 
   public static UserConnectorInfo create(
@@ -71,12 +75,15 @@ public abstract class UserConnectorInfo {
 
     Set<TypeElement> parcelableWrappers = new HashSet<>(annotationInfo.parcelableWrapperClasses());
     Set<TypeElement> futureWrappers = new HashSet<>(annotationInfo.futureWrapperClasses());
+    Set<TypeElement> additionalUsedTypes =
+        new HashSet<>(annotationInfo.additionalUsedTypes());
 
     for (TypeElement importConnectorClass : annotationInfo.importsClasses()) {
       UserConnectorInfo importConnector =
           UserConnectorInfo.create(context, importConnectorClass, globalSupportedTypes);
       parcelableWrappers.addAll(importConnector.parcelableWrapperClasses());
       futureWrappers.addAll(importConnector.futureWrapperClasses());
+      additionalUsedTypes.addAll(importConnector.additionalUsedTypes());
     }
 
     return new AutoValue_UserConnectorInfo(
@@ -91,9 +98,11 @@ public abstract class UserConnectorInfo {
         ImmutableSet.copyOf(parcelableWrappers),
         ImmutableSet.copyOf(futureWrappers),
         annotationInfo.importsClasses(),
+        annotationInfo.additionalUsedTypes(),
         annotationInfo.availabilityRestrictions());
   }
 
+  @SuppressWarnings("CheckReturnValue") // extract classes from annotation is incorrectly flagged
   private static CustomUserConnectorAnnotationInfo extractFromCustomUserConnectorAnnotation(
       Context context, TypeElement connectorElement) {
     CustomUserConnector customUserConnector =
@@ -102,6 +111,7 @@ public abstract class UserConnectorInfo {
     if (customUserConnector == null) {
       return new AutoValue_UserConnectorInfo_CustomUserConnectorAnnotationInfo(
           getDefaultServiceName(context, connectorElement),
+          ImmutableSet.of(),
           ImmutableSet.of(),
           ImmutableSet.of(),
           ImmutableSet.of(),
@@ -117,6 +127,9 @@ public abstract class UserConnectorInfo {
     Collection<TypeElement> imports =
         GeneratorUtilities.extractClassesFromAnnotation(
             context.types(), customUserConnector::imports);
+    Collection<TypeElement> additionalUsedTypes =
+        GeneratorUtilities.extractClassesFromAnnotation(
+            context.types(), customUserConnector::additionalUsedTypes);
 
     String serviceClassName = customUserConnector.serviceClassName();
 
@@ -127,6 +140,7 @@ public abstract class UserConnectorInfo {
         ImmutableSet.copyOf(parcelableWrappers),
         ImmutableSet.copyOf(futureWrappers),
         ImmutableSet.copyOf(imports),
+        ImmutableSet.copyOf(additionalUsedTypes),
         customUserConnector.availabilityRestrictions());
   }
 
