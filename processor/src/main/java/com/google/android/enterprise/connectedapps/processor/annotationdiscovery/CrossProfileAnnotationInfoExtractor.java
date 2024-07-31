@@ -37,6 +37,7 @@ final class CrossProfileAnnotationInfoExtractor
   }
 
   @Override
+  @SuppressWarnings("CheckReturnValue") // extract classes from annotation is incorrectly flagged
   protected CrossProfileAnnotationInfo annotationInfoFromAnnotation(
       CrossProfileAnnotation annotation, Types types) {
     CrossProfileAnnotationInfo.Builder builder =
@@ -51,6 +52,9 @@ final class CrossProfileAnnotationInfoExtractor
                 ImmutableSet.copyOf(
                     GeneratorUtilities.extractClassesFromAnnotation(
                         types, annotation::futureWrappers)))
+            .setAdditionalUsedTypes(ImmutableSet.copyOf(
+                    GeneratorUtilities.extractClassesFromAnnotation(
+                        types, annotation::additionalUsedTypes)))
             .setIsStatic(annotation.isStatic());
 
     return builder.build();
@@ -64,6 +68,7 @@ final class CrossProfileAnnotationInfoExtractor
                 "com.google.android.enterprise.connectedapps.annotations.CrossProfile"))
         .setParcelableWrapperClasses(ImmutableSet.of())
         .setFutureWrapperClasses(ImmutableSet.of())
+        .setAdditionalUsedTypes(ImmutableSet.of())
         .setIsStatic(false)
         .build();
   }
