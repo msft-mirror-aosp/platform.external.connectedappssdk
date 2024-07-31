@@ -19,81 +19,88 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.ImmutableSortedMap;
 
-/** Wrapper for reading & writing {@link Map} instances from and to {@link Parcel} instances. */
-public final class ParcelableMap<E, F> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableSortedMap} instances from and to {@link Parcel}
+ * instances.
+ */
+public final class ParcelableImmutableSortedMap<E extends Comparable, F> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Map<E, F> map;
+  private final ImmutableSortedMap<E, F> sortedMap;
 
   /**
-   * Create a wrapper for a given map.
+   * Create a wrapper for a given immutable sorted map.
    *
-   * <p>The passed in {@link Bundler} must be capable of bundling {@code E} and {@code F}.
+   * <p>The passed in {@link Bundler} must be capable of bundling {@code E}
    */
-  public static <E, F> ParcelableMap<E, F> of(Bundler bundler, BundlerType type, Map<E, F> map) {
-    return new ParcelableMap<>(bundler, type, map);
+  public static <E extends Comparable, F> ParcelableImmutableSortedMap<E, F> of(
+      Bundler bundler, BundlerType type, ImmutableSortedMap<E, F> sortedMap) {
+    return new ParcelableImmutableSortedMap<E, F>(bundler, type, sortedMap);
   }
 
-  public Map<E, F> get() {
-    return map;
+  public ImmutableSortedMap<E, F> get() {
+    return sortedMap;
   }
 
-  private ParcelableMap(Bundler bundler, BundlerType type, Map<E, F> map) {
+  private ParcelableImmutableSortedMap(
+      Bundler bundler, BundlerType type, ImmutableSortedMap<E, F> sortedMap) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
     this.bundler = bundler;
     this.type = type;
-    this.map = map;
+    this.sortedMap = sortedMap;
   }
 
-  private ParcelableMap(Parcel in) {
+  private ParcelableImmutableSortedMap(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
     if (size == NULL_SIZE) {
       type = null;
-      map = null;
+      sortedMap = null;
       return;
     }
 
-    map = new HashMap<>();
+    ImmutableSortedMap.Builder<E, F> sortedMapBuilder = ImmutableSortedMap.naturalOrder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType keyType = type.typeArguments().get(0);
+      BundlerType elementType = type.typeArguments().get(0);
       BundlerType valueType = type.typeArguments().get(1);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
-        E key = (E) bundler.readFromParcel(in, keyType);
+        E key = (E) bundler.readFromParcel(in, elementType);
         @SuppressWarnings("unchecked")
         F value = (F) bundler.readFromParcel(in, valueType);
-        map.put(key, value);
+        sortedMapBuilder.put(key, value);
       }
     }
+
+    sortedMap = sortedMapBuilder.build();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(bundler, flags);
 
-    if (map == null) {
+    if (sortedMap == null) {
       dest.writeInt(NULL_SIZE);
       return;
     }
 
-    dest.writeInt(map.size());
+    dest.writeInt(sortedMap.size());
     dest.writeParcelable(type, flags);
-    if (!map.isEmpty()) {
-      BundlerType keyType = type.typeArguments().get(0);
-      BundlerType valueType = type.typeArguments().get(1);
+    if (!sortedMap.isEmpty()) {
+      BundlerType valueType = type.typeArguments().get(0);
+      BundlerType keyType = type.typeArguments().get(1);
 
-      for (Map.Entry<E, F> entry : map.entrySet()) {
+      for (ImmutableSortedMap.Entry<E, F> entry : sortedMap.entrySet()) {
         bundler.writeToParcel(dest, entry.getKey(), keyType, flags);
         bundler.writeToParcel(dest, entry.getValue(), valueType, flags);
       }
@@ -106,16 +113,16 @@ public final class ParcelableMap<E, F> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableMap> CREATOR =
-      new Creator<ParcelableMap>() {
+  public static final Creator<ParcelableImmutableSortedMap> CREATOR =
+      new Creator<ParcelableImmutableSortedMap>() {
         @Override
-        public ParcelableMap createFromParcel(Parcel in) {
-          return new ParcelableMap(in);
+        public ParcelableImmutableSortedMap createFromParcel(Parcel in) {
+          return new ParcelableImmutableSortedMap(in);
         }
 
         @Override
-        public ParcelableMap[] newArray(int size) {
-          return new ParcelableMap[size];
+        public ParcelableImmutableSortedMap[] newArray(int size) {
+          return new ParcelableImmutableSortedMap[size];
         }
       };
 }
