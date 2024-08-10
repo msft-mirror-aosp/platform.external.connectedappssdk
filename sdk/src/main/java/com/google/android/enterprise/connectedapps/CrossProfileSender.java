@@ -419,7 +419,7 @@ public final class CrossProfileSender {
     try {
       if (manuallyBindLatch != null) {
         try {
-          manuallyBindLatch.await();
+          manuallyBindLatch.await(30, SECONDS);
         } catch (NullPointerException e) {
           // Ignore - avoiding race condition
         }
