@@ -38,6 +38,7 @@ import java.util.List;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
+import javax.annotation.processing.Generated;
 
 /**
  * Generate the {@code *_Bundler} class for a single {@link CrossProfileConfiguration} annotated
@@ -80,6 +81,10 @@ final class BundlerGenerator {
                 BUNDLER_CLASSNAME,
                 crossProfileType.className())
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .addAnnotation(
+                AnnotationSpec.builder(Generated.class)
+                    .addMember("value", "$S", this.getClass().getCanonicalName())
+                    .build())
             .addSuperinterface(BUNDLER_CLASSNAME);
 
     classBuilder.addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC).build());
@@ -129,7 +134,7 @@ final class BundlerGenerator {
             // ReflectedParcelable isn't a problem because it's the same APK on both sides
             .addAnnotation(
                 AnnotationSpec.builder(SuppressWarnings.class)
-                    .addMember("value", "{\"unchecked\", \"ReflectedParcelable\"}")
+                    .addMember("value", "\"unchecked\"")
                     .build())
             .addParameter(PARCEL_CLASSNAME, "parcel")
             .addParameter(Object.class, "value")
@@ -284,7 +289,7 @@ final class BundlerGenerator {
             // This is for passing rawtypes into the Parcelable*.of() methods
             .addAnnotation(
                 AnnotationSpec.builder(SuppressWarnings.class)
-                    .addMember("value", "{\"unchecked\", \"ReflectedParcelable\"}")
+                    .addMember("value", "\"unchecked\"")
                     .build())
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)

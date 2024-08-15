@@ -17,6 +17,7 @@ package com.google.android.enterprise.connectedapps.robotests;
 
 import static com.google.android.enterprise.connectedapps.SharedTestUtilities.INTERACT_ACROSS_USERS;
 import static com.google.common.truth.Truth.assertThat;
+import static org.robolectric.annotation.GraphicsMode.Mode.LEGACY;
 
 import android.app.Application;
 import android.app.Service;
@@ -49,16 +50,24 @@ import com.google.android.enterprise.connectedapps.testapp.types.ProfileTestCros
 import com.google.android.enterprise.connectedapps.testapp.types.TestCrossProfileType;
 import com.google.android.enterprise.connectedapps.testapp.types.TestCrossProfileType_SingleSenderCanThrow;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.ImmutableSortedMultiset;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,45 +75,47 @@ import org.junit.runner.RunWith;
 import org.robolectric.ParameterizedRobolectricTestRunner;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.GraphicsMode;
 import org.robolectric.annotation.LooperMode;
 
 @LooperMode(LooperMode.Mode.LEGACY)
+@GraphicsMode(LEGACY)
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @Config(minSdk = VERSION_CODES.O)
 public class TypesTest {
 
   private static final String STRING = "string";
   private static final byte BYTE = 1;
-  private static final byte[] BYTE_ARRAY = new byte[]{BYTE};
+  private static final byte[] BYTE_ARRAY = new byte[] {BYTE};
   private static final byte[][][] MULTIDIMENSIONAL_BYTE_ARRAY = new byte[][][] {{BYTE_ARRAY}};
   private static final Byte BYTE_BOXED = 1;
   private static final short SHORT = 1;
-  private static final short[] SHORT_ARRAY = new short[]{SHORT};
+  private static final short[] SHORT_ARRAY = new short[] {SHORT};
   private static final short[][][] MULTIDIMENSIONAL_SHORT_ARRAY = new short[][][] {{SHORT_ARRAY}};
   private static final Short SHORT_BOXED = 1;
   private static final int INT = 1;
-  private static final int[] INT_ARRAY = new int[]{INT};
+  private static final int[] INT_ARRAY = new int[] {INT};
   private static final int[][][] MULTIDIMENSIONAL_INT_ARRAY = new int[][][] {{INT_ARRAY}};
   private static final Integer INTEGER = 1;
   private static final long LONG = 1;
-  private static final long[] LONG_ARRAY = new long[]{LONG};
+  private static final long[] LONG_ARRAY = new long[] {LONG};
   private static final long[][][] MULTIDIMENSIONAL_LONG_ARRAY = new long[][][] {{LONG_ARRAY}};
   private static final Long LONG_BOXED = 1L;
   private static final float FLOAT = 1;
-  private static final float[] FLOAT_ARRAY = new float[]{FLOAT};
+  private static final float[] FLOAT_ARRAY = new float[] {FLOAT};
   private static final float[][][] MULTIDIMENSIONAL_FLOAT_ARRAY = new float[][][] {{FLOAT_ARRAY}};
   private static final Float FLOAT_BOXED = 1f;
   private static final double DOUBLE = 1;
-  private static final double[] DOUBLE_ARRAY = new double[]{DOUBLE};
+  private static final double[] DOUBLE_ARRAY = new double[] {DOUBLE};
   private static final double[][][] MULTIDIMENSIONAL_DOUBLE_ARRAY =
       new double[][][] {{DOUBLE_ARRAY}};
   private static final Double DOUBLE_BOXED = 1d;
   private static final char CHAR = 1;
-  private static final char[] CHAR_ARRAY = new char[]{CHAR};
+  private static final char[] CHAR_ARRAY = new char[] {CHAR};
   private static final char[][][] MULTIDIMENSIONAL_CHAR_ARRAY = new char[][][] {{CHAR_ARRAY}};
   private static final Character CHARACTER = 1;
   private static final boolean BOOLEAN = true;
-  private static final boolean[] BOOLEAN_ARRAY = new boolean[]{BOOLEAN};
+  private static final boolean[] BOOLEAN_ARRAY = new boolean[] {BOOLEAN};
   private static final boolean[][][] MULTIDIMENSIONAL_BOOLEAN_ARRAY =
       new boolean[][][] {{BOOLEAN_ARRAY}};
   private static final Boolean BOOLEAN_BOXED = true;
@@ -116,8 +127,27 @@ public class TypesTest {
   private static final List<SerializableObject> listOfSerializable = ImmutableList.of(SERIALIZABLE);
   private static final ImmutableMap<String, String> IMMUTABLE_MAP_STRING_TO_STRING =
       ImmutableMap.of(STRING, STRING);
-  private static final Set<String> setOfString = ImmutableSet.of(STRING);
-  private static final Collection<String> collectionOfString = ImmutableList.of(STRING);
+  private static final ImmutableSortedMap<String, String> IMMUTABLE_SORTED_MAP_STRING_TO_STRING =
+      ImmutableSortedMap.of(STRING, STRING);
+  private static final ImmutableMultimap<String, String> IMMUTABLE_MULTIMAP_STRING_TO_STRING =
+      ImmutableMultimap.of(STRING, STRING);
+  private static final ImmutableSetMultimap<String, String>
+      IMMUTABLE_SET_MULTIMAP_STRING_TO_STRING = ImmutableSetMultimap.of(STRING, STRING);
+  private static final ImmutableListMultimap<String, String>
+      IMMUTABLE_LIST_MULTIMAP_STRING_TO_STRING = ImmutableListMultimap.of(STRING, STRING);
+  private static final ImmutableList<String> IMMUTABLE_LIST_STRING = ImmutableList.of(STRING);
+  private static final ImmutableSet<String> IMMUTABLE_SET_STRING = ImmutableSet.of(STRING);
+  private static final ImmutableSortedSet<String> IMMUTABLE_SORTED_SET_STRING =
+      ImmutableSortedSet.of(STRING);
+  private static final ImmutableMultiset<String> IMMUTABLE_MULTISET_STRING =
+      ImmutableMultiset.of(STRING);
+  private static final ImmutableSortedMultiset<String> IMMUTABLE_SORTED_MULTISET_STRING =
+      ImmutableSortedMultiset.of(STRING);
+  private static final ImmutableBiMap<String, String> IMMUTABLE_BIMAP_STRING_TO_STRING =
+      ImmutableBiMap.of(STRING, STRING);
+  private static final Collection<String> COLLECTION_OF_STRING = ImmutableList.of(STRING);
+  private static final ImmutableCollection<String> IMMUTABLE_COLLECTION_OF_STRING =
+      ImmutableList.of(STRING);
   // private static final TestProto PROTO = TestProto.newBuilder().setText(STRING).build();
   // private static final List<TestProto> listOfProto = ImmutableList.of(PROTO);
   private static final String[] arrayOfString = new String[] {STRING};
@@ -146,7 +176,6 @@ public class TypesTest {
   private final ParcelableContainingBinder parcelableContainingBinder =
       new ParcelableContainingBinder();
   private final Drawable drawable = new BitmapDrawable(context.getResources(), bitmap);
-
 
   private final TestScheduledExecutorService scheduledExecutorService =
       new TestScheduledExecutorService();
@@ -403,9 +432,98 @@ public class TypesTest {
   }
 
   @Test
+  public void immutableSortedMapReturnTypeAndArgument_bothWork()
+      throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableSortedMapMethod(IMMUTABLE_SORTED_MAP_STRING_TO_STRING))
+        .isEqualTo(IMMUTABLE_SORTED_MAP_STRING_TO_STRING);
+  }
+
+  @Test
+  public void immutableMultimapReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableMultimapMethod(IMMUTABLE_MULTIMAP_STRING_TO_STRING))
+        .containsExactlyEntriesIn(IMMUTABLE_MULTIMAP_STRING_TO_STRING);
+  }
+
+  @Test
+  public void immutableSetMultimapReturnTypeAndArgument_bothWork()
+      throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableSetMultimapMethod(IMMUTABLE_SET_MULTIMAP_STRING_TO_STRING))
+        .isEqualTo(IMMUTABLE_SET_MULTIMAP_STRING_TO_STRING);
+  }
+
+  @Test
+  public void immutableListMultimapReturnTypeAndArgument_bothWork()
+      throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableListMultimapMethod(IMMUTABLE_LIST_MULTIMAP_STRING_TO_STRING))
+        .isEqualTo(IMMUTABLE_LIST_MULTIMAP_STRING_TO_STRING);
+  }
+
+  @Test
+  public void immutableListReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableListMethod(IMMUTABLE_LIST_STRING))
+        .isEqualTo(IMMUTABLE_LIST_STRING);
+  }
+
+  @Test
+  public void immutableSetReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableSetMethod(IMMUTABLE_SET_STRING))
+        .isEqualTo(IMMUTABLE_SET_STRING);
+  }
+
+  @Test
+  public void immutableMultisetReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableMultisetMethod(IMMUTABLE_MULTISET_STRING))
+        .isEqualTo(IMMUTABLE_MULTISET_STRING);
+  }
+
+  @Test
+  public void immutableSortedMultisetReturnTypeAndArgument_bothWork()
+      throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableSortedMultisetMethod(IMMUTABLE_SORTED_MULTISET_STRING))
+        .isEqualTo(IMMUTABLE_SORTED_MULTISET_STRING);
+  }
+
+  @Test
+  public void immutableSortedSetReturnTypeAndArgument_bothWork()
+      throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableSortedSetMethod(IMMUTABLE_SORTED_SET_STRING))
+        .isEqualTo(IMMUTABLE_SORTED_SET_STRING);
+  }
+
+  @Test
   public void setReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector).identitySetMethod(setOfString))
-        .isEqualTo(setOfString);
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identitySetMethod(IMMUTABLE_SET_STRING))
+        .isEqualTo(IMMUTABLE_SET_STRING);
   }
 
   @Test
@@ -413,8 +531,27 @@ public class TypesTest {
     assertThat(
             senderProvider
                 .provide(context, testProfileConnector)
-                .identityCollectionMethod(collectionOfString))
-        .containsExactlyElementsIn(collectionOfString);
+                .identityCollectionMethod(COLLECTION_OF_STRING))
+        .containsExactlyElementsIn(COLLECTION_OF_STRING);
+  }
+
+  @Test
+  public void immutableCollectionReturnTypeAndArgument_bothWork()
+      throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityCollectionMethod(IMMUTABLE_COLLECTION_OF_STRING))
+        .containsExactlyElementsIn(IMMUTABLE_COLLECTION_OF_STRING);
+  }
+
+  @Test
+  public void immutableBiMapReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityImmutableBiMapMethod(IMMUTABLE_BIMAP_STRING_TO_STRING))
+        .isEqualTo(IMMUTABLE_BIMAP_STRING_TO_STRING);
   }
 
   @Test
@@ -677,8 +814,11 @@ public class TypesTest {
 
   @Test
   public void parcelableArgumentAndReturnType_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector)
-        .identityParcelableMethod((Parcelable) PARCELABLE)).isEqualTo(PARCELABLE);
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityParcelableMethod((Parcelable) PARCELABLE))
+        .isEqualTo(PARCELABLE);
   }
 
   @Test
@@ -716,14 +856,27 @@ public class TypesTest {
 
   @Test
   public void charSequenceReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector)
-                   .identityCharSequenceMethod(CHAR_SEQUENCE).toString())
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityCharSequenceMethod(CHAR_SEQUENCE)
+                .toString())
         .isEqualTo(CHAR_SEQUENCE.toString());
   }
 
   @Test
+  public void nullCharSequenceReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
+    assertThat(
+            senderProvider.provide(context, testProfileConnector).identityCharSequenceMethod(null))
+        .isEqualTo(null);
+  }
+
+  @Test
   public void floatArrayReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector).identityFloatArrayMethod(FLOAT_ARRAY))
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityFloatArrayMethod(FLOAT_ARRAY))
         .isEqualTo(FLOAT_ARRAY);
   }
 
@@ -758,7 +911,10 @@ public class TypesTest {
 
   @Test
   public void shortArrayReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector).identityShortArrayMethod(SHORT_ARRAY))
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityShortArrayMethod(SHORT_ARRAY))
         .isEqualTo(SHORT_ARRAY);
   }
 
@@ -774,7 +930,8 @@ public class TypesTest {
 
   @Test
   public void intArrayReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector).identityIntArrayMethod(INT_ARRAY))
+    assertThat(
+            senderProvider.provide(context, testProfileConnector).identityIntArrayMethod(INT_ARRAY))
         .isEqualTo(INT_ARRAY);
   }
 
@@ -790,7 +947,10 @@ public class TypesTest {
 
   @Test
   public void longArrayReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector).identityLongArrayMethod(LONG_ARRAY))
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityLongArrayMethod(LONG_ARRAY))
         .isEqualTo(LONG_ARRAY);
   }
 
@@ -806,7 +966,10 @@ public class TypesTest {
 
   @Test
   public void doubleArrayReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector).identityDoubleArrayMethod(DOUBLE_ARRAY))
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityDoubleArrayMethod(DOUBLE_ARRAY))
         .isEqualTo(DOUBLE_ARRAY);
   }
 
@@ -822,7 +985,10 @@ public class TypesTest {
 
   @Test
   public void charArrayReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector).identityCharArrayMethod(CHAR_ARRAY))
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityCharArrayMethod(CHAR_ARRAY))
         .isEqualTo(CHAR_ARRAY);
   }
 
@@ -838,7 +1004,10 @@ public class TypesTest {
 
   @Test
   public void booleanArrayReturnTypeAndArgument_bothWork() throws UnavailableProfileException {
-    assertThat(senderProvider.provide(context, testProfileConnector).identityBooleanArrayMethod(BOOLEAN_ARRAY))
+    assertThat(
+            senderProvider
+                .provide(context, testProfileConnector)
+                .identityBooleanArrayMethod(BOOLEAN_ARRAY))
         .isEqualTo(BOOLEAN_ARRAY);
   }
 
@@ -863,8 +1032,9 @@ public class TypesTest {
   }
 
   private static int[] getDrawablePixels(Drawable drawable) {
-    Bitmap bitmap = Bitmap.createBitmap(
-        drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+    Bitmap bitmap =
+        Bitmap.createBitmap(
+            drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
     drawable.draw(new Canvas(bitmap));
 
     int[] pixels = new int[bitmap.getHeight() * bitmap.getWidth()];
@@ -872,4 +1042,3 @@ public class TypesTest {
     return pixels;
   }
 }
-
