@@ -33,6 +33,8 @@ public abstract class CrossProfileAnnotationInfo {
 
   public abstract ImmutableCollection<TypeElement> futureWrapperClasses();
 
+  public abstract ImmutableCollection<TypeElement> additionalUsedTypes();
+
   public abstract boolean isStatic();
 
   public boolean connectorIsDefault() {
@@ -51,6 +53,8 @@ public abstract class CrossProfileAnnotationInfo {
     public abstract Builder setParcelableWrapperClasses(ImmutableCollection<TypeElement> value);
 
     public abstract Builder setFutureWrapperClasses(ImmutableCollection<TypeElement> value);
+
+    public abstract Builder setAdditionalUsedTypes(ImmutableCollection<TypeElement> value);
 
     public abstract Builder setIsStatic(boolean value);
 

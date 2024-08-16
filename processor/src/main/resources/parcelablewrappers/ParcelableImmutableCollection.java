@@ -19,77 +19,85 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 
-/** Wrapper for reading & writing {@link Set} instances from and to {@link Parcel} instances. */
-public final class ParcelableSet<E> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableCollection} instances from and to {@link Parcel}
+ * instances.
+ */
+public final class ParcelableImmutableCollection<E> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Set<E> set;
+  private final ImmutableCollection<E> collection;
 
   /**
-   * Create a wrapper for a given set.
+   * Create a wrapper for a given immutable collection.
    *
-   * <p>The passed in {@link Bundler} must be capable of bundling {@code F}.
+   * <p>The passed in {@link Bundler} must be capable of bundling {@code E}
    */
-  public static <F> ParcelableSet<F> of(Bundler bundler, BundlerType type, Set<F> set) {
-    return new ParcelableSet<>(bundler, type, set);
+  public static <E> ParcelableImmutableCollection<E> of(
+      Bundler bundler, BundlerType type, ImmutableCollection<E> collection) {
+    return new ParcelableImmutableCollection<>(bundler, type, collection);
   }
 
-  public Set<E> get() {
-    return set;
+  public ImmutableCollection<E> get() {
+    return collection;
   }
 
-  private ParcelableSet(Bundler bundler, BundlerType type, Set<E> set) {
+  private ParcelableImmutableCollection(
+      Bundler bundler, BundlerType type, ImmutableCollection<E> collection) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
     this.bundler = bundler;
     this.type = type;
-    this.set = set;
+    this.collection = collection;
   }
 
-  private ParcelableSet(Parcel in) {
+  private ParcelableImmutableCollection(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
     if (size == NULL_SIZE) {
       type = null;
-      set = null;
+      collection = null;
       return;
     }
 
-    set = new HashSet<>();
+    ImmutableCollection.Builder<E> collectionBuilder = ImmutableList.builder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType valueType = type.typeArguments().get(0);
+      BundlerType elementType = type.typeArguments().get(0);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
-        E value = (E) bundler.readFromParcel(in, valueType);
-        set.add(value);
+        E element = (E) bundler.readFromParcel(in, elementType);
+        collectionBuilder.add(element);
       }
     }
+
+    collection = collectionBuilder.build();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(bundler, flags);
 
-    if (set == null) {
+    if (collection == null) {
       dest.writeInt(NULL_SIZE);
       return;
     }
 
-    dest.writeInt(set.size());
+    dest.writeInt(collection.size());
     dest.writeParcelable(type, flags);
-    if (!set.isEmpty()) {
+    if (!collection.isEmpty()) {
       BundlerType valueType = type.typeArguments().get(0);
 
-      for (E value : set) {
+      for (E value : collection) {
         bundler.writeToParcel(dest, value, valueType, flags);
       }
     }
@@ -101,16 +109,16 @@ public final class ParcelableSet<E> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableSet> CREATOR =
-      new Creator<ParcelableSet>() {
+  public static final Creator<ParcelableImmutableCollection> CREATOR =
+      new Creator<ParcelableImmutableCollection>() {
         @Override
-        public ParcelableSet createFromParcel(Parcel in) {
-          return new ParcelableSet(in);
+        public ParcelableImmutableCollection createFromParcel(Parcel in) {
+          return new ParcelableImmutableCollection(in);
         }
 
         @Override
-        public ParcelableSet[] newArray(int size) {
-          return new ParcelableSet[size];
+        public ParcelableImmutableCollection[] newArray(int size) {
+          return new ParcelableImmutableCollection[size];
         }
       };
 }
