@@ -19,81 +19,89 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.ImmutableBiMap;
 
-/** Wrapper for reading & writing {@link Map} instances from and to {@link Parcel} instances. */
-public final class ParcelableMap<E, F> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableBiMap} instances from and to {@link Parcel}
+ * instances.
+ */
+public final class ParcelableImmutableBiMap<E, F> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
+  private static final int KEY_TYPE_INDEX = 0;
+  private static final int VALUE_TYPE_INDEX = 1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Map<E, F> map;
+  private final ImmutableBiMap<E, F> biMap;
 
   /**
-   * Create a wrapper for a given map.
+   * Create a wrapper for a given immutable biMap.
    *
    * <p>The passed in {@link Bundler} must be capable of bundling {@code E} and {@code F}.
    */
-  public static <E, F> ParcelableMap<E, F> of(Bundler bundler, BundlerType type, Map<E, F> map) {
-    return new ParcelableMap<>(bundler, type, map);
+  public static <E, F> ParcelableImmutableBiMap<E, F> of(
+      Bundler bundler, BundlerType type, ImmutableBiMap<E, F> biMap) {
+    return new ParcelableImmutableBiMap<>(bundler, type, biMap);
   }
 
-  public Map<E, F> get() {
-    return map;
+  public ImmutableBiMap<E, F> get() {
+    return biMap;
   }
 
-  private ParcelableMap(Bundler bundler, BundlerType type, Map<E, F> map) {
+  private ParcelableImmutableBiMap(Bundler bundler, BundlerType type, ImmutableBiMap<E, F> biMap) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
     this.bundler = bundler;
     this.type = type;
-    this.map = map;
+    this.biMap = biMap;
   }
 
-  private ParcelableMap(Parcel in) {
+  private ParcelableImmutableBiMap(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
     if (size == NULL_SIZE) {
       type = null;
-      map = null;
+      biMap = null;
       return;
     }
 
-    map = new HashMap<>();
+    ImmutableBiMap.Builder<E, F> biMapBuilder = ImmutableBiMap.builder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType keyType = type.typeArguments().get(0);
-      BundlerType valueType = type.typeArguments().get(1);
+      BundlerType keyType = type.typeArguments().get(KEY_TYPE_INDEX);
+      BundlerType valueType = type.typeArguments().get(VALUE_TYPE_INDEX);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
         E key = (E) bundler.readFromParcel(in, keyType);
         @SuppressWarnings("unchecked")
         F value = (F) bundler.readFromParcel(in, valueType);
-        map.put(key, value);
+        biMapBuilder.put(key, value);
       }
     }
+
+    biMap = biMapBuilder.build();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(bundler, flags);
 
-    if (map == null) {
+    if (biMap == null) {
       dest.writeInt(NULL_SIZE);
       return;
     }
 
-    dest.writeInt(map.size());
+    dest.writeInt(biMap.size());
     dest.writeParcelable(type, flags);
-    if (!map.isEmpty()) {
+    if (!biMap.isEmpty()) {
       BundlerType keyType = type.typeArguments().get(0);
       BundlerType valueType = type.typeArguments().get(1);
 
-      for (Map.Entry<E, F> entry : map.entrySet()) {
+      for (ImmutableBiMap.Entry<E, F> entry : biMap.entrySet()) {
         bundler.writeToParcel(dest, entry.getKey(), keyType, flags);
         bundler.writeToParcel(dest, entry.getValue(), valueType, flags);
       }
@@ -106,16 +114,16 @@ public final class ParcelableMap<E, F> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableMap> CREATOR =
-      new Creator<ParcelableMap>() {
+  public static final Creator<ParcelableImmutableBiMap> CREATOR =
+      new Creator<ParcelableImmutableBiMap>() {
         @Override
-        public ParcelableMap createFromParcel(Parcel in) {
-          return new ParcelableMap(in);
+        public ParcelableImmutableBiMap createFromParcel(Parcel in) {
+          return new ParcelableImmutableBiMap(in);
         }
 
         @Override
-        public ParcelableMap[] newArray(int size) {
-          return new ParcelableMap[size];
+        public ParcelableImmutableBiMap[] newArray(int size) {
+          return new ParcelableImmutableBiMap[size];
         }
       };
 }
