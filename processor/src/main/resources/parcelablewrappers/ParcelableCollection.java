@@ -25,7 +25,7 @@ import java.util.Collection;
 /**
  * Wrapper for reading & writing {@link Collection} instances from and to {@link Parcel} instances.
  */
-public class ParcelableCollection<E> implements Parcelable {
+public final class ParcelableCollection<E> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 
