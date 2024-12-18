@@ -19,32 +19,35 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.common.collect.ImmutableSet;
 
-/** Wrapper for reading & writing {@link Set} instances from and to {@link Parcel} instances. */
-public final class ParcelableSet<E> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableSet} instances from and to {@link Parcel}
+ * instances.
+ */
+public final class ParcelableImmutableSet<E> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Set<E> set;
+  private final ImmutableSet<E> set;
 
   /**
-   * Create a wrapper for a given set.
+   * Create a wrapper for a given immutable set.
    *
-   * <p>The passed in {@link Bundler} must be capable of bundling {@code F}.
+   * <p>The passed in {@link Bundler} must be capable of bundling {@code E}
    */
-  public static <F> ParcelableSet<F> of(Bundler bundler, BundlerType type, Set<F> set) {
-    return new ParcelableSet<>(bundler, type, set);
+  public static <E> ParcelableImmutableSet<E> of(
+      Bundler bundler, BundlerType type, ImmutableSet<E> set) {
+    return new ParcelableImmutableSet<>(bundler, type, set);
   }
 
-  public Set<E> get() {
+  public ImmutableSet<E> get() {
     return set;
   }
 
-  private ParcelableSet(Bundler bundler, BundlerType type, Set<E> set) {
+  private ParcelableImmutableSet(Bundler bundler, BundlerType type, ImmutableSet<E> set) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
@@ -53,7 +56,7 @@ public final class ParcelableSet<E> implements Parcelable {
     this.set = set;
   }
 
-  private ParcelableSet(Parcel in) {
+  private ParcelableImmutableSet(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
@@ -63,16 +66,19 @@ public final class ParcelableSet<E> implements Parcelable {
       return;
     }
 
-    set = new HashSet<>();
+    ImmutableSet.Builder<E> setBuilder = ImmutableSet.builder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType valueType = type.typeArguments().get(0);
+      BundlerType elementType = type.typeArguments().get(0);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
-        E value = (E) bundler.readFromParcel(in, valueType);
-        set.add(value);
+        E element = (E) bundler.readFromParcel(in, elementType);
+        setBuilder.add(element);
       }
     }
+
+    set = setBuilder.build();
   }
 
   @Override
@@ -101,16 +107,16 @@ public final class ParcelableSet<E> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableSet> CREATOR =
-      new Creator<ParcelableSet>() {
+  public static final Creator<ParcelableImmutableSet> CREATOR =
+      new Creator<ParcelableImmutableSet>() {
         @Override
-        public ParcelableSet createFromParcel(Parcel in) {
-          return new ParcelableSet(in);
+        public ParcelableImmutableSet createFromParcel(Parcel in) {
+          return new ParcelableImmutableSet(in);
         }
 
         @Override
-        public ParcelableSet[] newArray(int size) {
-          return new ParcelableSet[size];
+        public ParcelableImmutableSet[] newArray(int size) {
+          return new ParcelableImmutableSet[size];
         }
       };
 }

@@ -49,13 +49,11 @@ import com.google.android.enterprise.connectedapps.internal.CrossProfileBundleCa
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
@@ -285,18 +283,19 @@ public final class CrossProfileSender {
   // This is synchronized which isn't massively performant but it only gets accessed once straight
   // after creating a Sender, and once each time availability changes
   private static final Set<CrossProfileSender> senders =
-     synchronizedSet(newSetFromMap(new WeakHashMap<>()));
+      synchronizedSet(newSetFromMap(new WeakHashMap<>()));
 
-  private static final BroadcastReceiver profileAvailabilityReceiver = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      synchronized (senders) {
-        for (CrossProfileSender sender : senders) {
-          sender.scheduledExecutorService.execute(sender::checkAvailability);
+  private static final BroadcastReceiver profileAvailabilityReceiver =
+      new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+          synchronized (senders) {
+            for (CrossProfileSender sender : senders) {
+              sender.scheduledExecutorService.execute(sender::checkAvailability);
+            }
+          }
         }
-      }
-    }
-  };
+      };
 
   private final AtomicReference<ScheduledFuture<Void>> automaticDisconnectionFuture =
       new AtomicReference<>();
@@ -419,7 +418,11 @@ public final class CrossProfileSender {
     Log.i(LOG_TAG, "Blocking for bind");
     try {
       if (manuallyBindLatch != null) {
-        manuallyBindLatch.await();
+        try {
+          manuallyBindLatch.await(30, SECONDS);
+        } catch (NullPointerException e) {
+          // Ignore - avoiding race condition
+        }
       }
     } catch (InterruptedException e) {
       Log.e(LOG_TAG, "Interrupted waiting for manually bind", e);
