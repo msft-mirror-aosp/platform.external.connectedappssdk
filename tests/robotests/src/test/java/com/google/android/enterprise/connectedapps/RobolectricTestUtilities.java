@@ -60,6 +60,8 @@ public class RobolectricTestUtilities {
 
   /* Matches UserHandle#PER_USER_RANGE */
   private static final int PER_USER_RANGE = 100000;
+  /* Matches UserInfo#FLAG_PROFILE */
+  private static final int FLAG_PROFILE = 0x00001000;
 
   private final UserHandle personalProfileUserHandle =
       getUserHandleForUserId(PERSONAL_PROFILE_USER_ID);
@@ -136,10 +138,11 @@ public class RobolectricTestUtilities {
   }
 
   public void createWorkUser() {
-    shadowOf(userManager).addUser(WORK_PROFILE_USER_ID, "Work Profile", /* flags= */ 0);
+    shadowOf(userManager).addUser(WORK_PROFILE_USER_ID, "Work Profile", /* flags= */ FLAG_PROFILE);
     shadowOf(userManager)
-        .addProfile(PERSONAL_PROFILE_USER_ID, WORK_PROFILE_USER_ID, "Work Profile", 0);
-    shadowOf(userManager).addProfile(WORK_PROFILE_USER_ID, WORK_PROFILE_USER_ID, "Work Profile", 0);
+        .addProfile(PERSONAL_PROFILE_USER_ID, WORK_PROFILE_USER_ID, "Work Profile", FLAG_PROFILE);
+    shadowOf(userManager)
+        .addProfile(WORK_PROFILE_USER_ID, WORK_PROFILE_USER_ID, "Work Profile", FLAG_PROFILE);
     shadowOf(userManager)
         .addProfile(WORK_PROFILE_USER_ID, PERSONAL_PROFILE_USER_ID, "Personal Profile", 0);
   }

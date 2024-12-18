@@ -19,77 +19,83 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.enterprise.connectedapps.internal.Bundler;
 import com.google.android.enterprise.connectedapps.internal.BundlerType;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.common.collect.ImmutableList;
 
-/** Wrapper for reading & writing {@link Set} instances from and to {@link Parcel} instances. */
-public final class ParcelableSet<E> implements Parcelable {
+/**
+ * Wrapper for reading & writing {@link ImmutableList} instances from and to {@link Parcel}
+ * instances.
+ */
+public final class ParcelableImmutableList<E> implements Parcelable {
 
   private static final int NULL_SIZE = -1;
 
   private final Bundler bundler;
   private final BundlerType type;
-  private final Set<E> set;
+  private final ImmutableList<E> list;
 
   /**
-   * Create a wrapper for a given set.
+   * Create a wrapper for a given immutable list.
    *
-   * <p>The passed in {@link Bundler} must be capable of bundling {@code F}.
+   * <p>The passed in {@link Bundler} must be capable of bundling {@code E}
    */
-  public static <F> ParcelableSet<F> of(Bundler bundler, BundlerType type, Set<F> set) {
-    return new ParcelableSet<>(bundler, type, set);
+  public static <E> ParcelableImmutableList<E> of(
+      Bundler bundler, BundlerType type, ImmutableList<E> list) {
+    return new ParcelableImmutableList<>(bundler, type, list);
   }
 
-  public Set<E> get() {
-    return set;
+  public ImmutableList<E> get() {
+    return list;
   }
 
-  private ParcelableSet(Bundler bundler, BundlerType type, Set<E> set) {
+  private ParcelableImmutableList(Bundler bundler, BundlerType type, ImmutableList<E> list) {
     if (bundler == null || type == null) {
       throw new NullPointerException();
     }
     this.bundler = bundler;
     this.type = type;
-    this.set = set;
+    this.list = list;
   }
 
-  private ParcelableSet(Parcel in) {
+  private ParcelableImmutableList(Parcel in) {
     bundler = in.readParcelable(Bundler.class.getClassLoader());
     int size = in.readInt();
 
     if (size == NULL_SIZE) {
       type = null;
-      set = null;
+      list = null;
       return;
     }
 
-    set = new HashSet<>();
+    ImmutableList.Builder<E> listBuilder = ImmutableList.builder();
+
     type = (BundlerType) in.readParcelable(Bundler.class.getClassLoader());
     if (size > 0) {
-      BundlerType valueType = type.typeArguments().get(0);
+      BundlerType elementType = type.typeArguments().get(0);
       for (int i = 0; i < size; i++) {
         @SuppressWarnings("unchecked")
-        E value = (E) bundler.readFromParcel(in, valueType);
-        set.add(value);
+        E element = (E) bundler.readFromParcel(in, elementType);
+        listBuilder.add(element);
       }
     }
+
+    list = listBuilder.build();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(bundler, flags);
 
-    if (set == null) {
+    if (list == null) {
       dest.writeInt(NULL_SIZE);
       return;
     }
 
-    dest.writeInt(set.size());
+    dest.writeInt(list.size());
     dest.writeParcelable(type, flags);
-    if (!set.isEmpty()) {
+    if (!list.isEmpty()) {
       BundlerType valueType = type.typeArguments().get(0);
 
-      for (E value : set) {
+      for (E value : list) {
         bundler.writeToParcel(dest, value, valueType, flags);
       }
     }
@@ -101,16 +107,16 @@ public final class ParcelableSet<E> implements Parcelable {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final Creator<ParcelableSet> CREATOR =
-      new Creator<ParcelableSet>() {
+  public static final Creator<ParcelableImmutableList> CREATOR =
+      new Creator<ParcelableImmutableList>() {
         @Override
-        public ParcelableSet createFromParcel(Parcel in) {
-          return new ParcelableSet(in);
+        public ParcelableImmutableList createFromParcel(Parcel in) {
+          return new ParcelableImmutableList(in);
         }
 
         @Override
-        public ParcelableSet[] newArray(int size) {
-          return new ParcelableSet[size];
+        public ParcelableImmutableList[] newArray(int size) {
+          return new ParcelableImmutableList[size];
         }
       };
 }
