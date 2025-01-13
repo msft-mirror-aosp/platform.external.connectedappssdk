@@ -15,6 +15,8 @@
  */
 package com.google.android.enterprise.connectedapps;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.pm.CrossProfileApps;
@@ -28,7 +30,6 @@ import com.google.android.enterprise.connectedapps.annotations.AvailabilityRestr
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Utility methods for acting on profiles. These methods should only be used by the SDK. */
@@ -109,7 +110,7 @@ class CrossProfileSDKUtilities {
       userHandles =
           userHandles.stream()
               .filter(userHandle -> isPersonalOrWorkProfile(crossProfileApps, userHandle))
-                  .toList();
+              .collect(toImmutableList());
     }
 
     if (userHandles.isEmpty()) {

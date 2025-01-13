@@ -326,7 +326,7 @@ public final class CrossProfileSender {
     this.availabilityListener = availabilityListener;
     bindToService = new ComponentName(context.getPackageName(), connectedAppsServiceClassName);
     canUseReflectedApis = ReflectionUtilities.canUseReflectedApis();
-    this.scheduledExecutorService = scheduledExecutorService;
+    this.scheduledExecutorService = new DebuggableScheduledExecutorService(scheduledExecutorService);
     this.availabilityRestrictions = availabilityRestrictions;
 
     senders.add(this);
@@ -511,9 +511,9 @@ public final class CrossProfileSender {
    */
   private void unbind() {
     Log.i(LOG_TAG, "Unbind");
-    if (isBound()) {
+    boolean isBound = iCrossProfileService.getAndSet(null) != null;
+    if (isBound) {
       context.unbindService(connection);
-      iCrossProfileService.set(null);
       checkConnected();
       cancelAutomaticDisconnection();
     }
@@ -582,6 +582,9 @@ public final class CrossProfileSender {
     } catch (UnavailableProfileException e) {
       Log.e(LOG_TAG, "Error while trying to bind", e);
       onBindingAttemptFailed(e);
+    } catch (IllegalArgumentException e) {
+      Log.e(LOG_TAG, "IllegalArgumentException when trying to bind", e);
+      onBindingAttemptFailed("IllegalArgumentException", e);
     }
   }
 
