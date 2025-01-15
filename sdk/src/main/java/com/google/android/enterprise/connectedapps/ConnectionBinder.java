@@ -32,13 +32,17 @@ public interface ConnectionBinder {
    *
    * <p>This should not be called if {@link #hasPermissionToBind(Context)} returns {@code False} or
    * {@link #bindingIsPossible(Context, AvailabilityRestrictions)} returns {@code False}.
+   *
+   * <p>For certain devices, despite the initial binding failing, calling unbindService() will throw
+   * an IllegalArgumentException. This is a known issue with certain devices and we should not
+   * crash. See b/353372299 for context.
    */
   boolean tryBind(
       Context context,
       ComponentName bindToService,
       ServiceConnection connection,
       AvailabilityRestrictions availabilityRestrictions)
-      throws MissingApiException, UnavailableProfileException;
+      throws MissingApiException, UnavailableProfileException, IllegalArgumentException;
 
   /**
    * Return true if there is a profile available to bind to, while enforcing the passed in {@link

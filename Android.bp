@@ -79,6 +79,7 @@ android_library {
         "ConnectedAppsSDK_Annotations",
         "guava-android-annotation-stubs",
         "error_prone_annotations",
+        "guava",
     ],
     manifest: "sdk/src/main/AndroidManifest.xml",
     min_sdk_version: "28",
