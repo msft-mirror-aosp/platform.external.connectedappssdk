@@ -25,6 +25,8 @@ import com.google.android.enterprise.connectedapps.exceptions.UnavailableProfile
 import com.google.android.enterprise.connectedapps.instrumented.utils.InstrumentedTestUtilities;
 import com.google.android.enterprise.connectedapps.testapp.connector.TestProfileConnector;
 import com.google.android.enterprise.connectedapps.testapp.types.ProfileTestCrossProfileType;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -46,7 +48,11 @@ public class ConnectTest {
 
   private static final String STRING = "String";
 
-  private static final TestProfileConnector connector = TestProfileConnector.create(context);
+  private static final ScheduledExecutorService scheduledExecutorService =
+      Executors.newSingleThreadScheduledExecutor();
+
+  private static final TestProfileConnector connector =
+      TestProfileConnector.create(context, scheduledExecutorService);
   private final ProfileTestCrossProfileType type = ProfileTestCrossProfileType.create(connector);
   private static final InstrumentedTestUtilities utilities =
       new InstrumentedTestUtilities(context, connector);
@@ -109,6 +115,27 @@ public class ConnectTest {
     for (int i = 0; i < 1000; i++) {
       try (ProfileConnectionHolder ignored = connector.connect()) {
         assertThat(type.other().identityStringMethod(STRING)).isEqualTo(STRING);
+      }
+    }
+  }
+
+  @Test
+  public void connect_and_disconnect_manyTimes_succeeds() throws Exception {
+    // A connection will be auto closed, and if there's no more connection holders after closing
+    // (always the case here), a connection close will be scheduled in 30s.
+    // A race condition occurs if we try to reconnect again at the exact time the connection is
+    // closed, causing a lost open connection and preventing reconnections.
+    // To enforce this race condition, we sleep for 25s, and then fire new connections for 10s.
+    try (ProfileConnectionHolder ignored = connector.connect()) {
+      assertThat(connector.isConnected()).isTrue();
+    }
+    Thread.sleep(25_000);
+    int timeMillis = 10_000; // 10s of connection attempts.
+    int tries = 100;
+    for (int i = 0; i < tries; i++) {
+      try (ProfileConnectionHolder ignored = connector.connect()) {
+        assertThat(connector.isConnected()).isTrue();
+        Thread.sleep(timeMillis / tries);
       }
     }
   }
