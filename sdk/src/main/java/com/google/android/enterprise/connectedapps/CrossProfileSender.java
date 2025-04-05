@@ -57,6 +57,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -393,7 +394,18 @@ public final class CrossProfileSender {
       throw new UnavailableProfileException("Permission not granted");
     }
 
-    cancelAutomaticDisconnection();
+    // Note that cancelAutomaticDisconnection would not cancel any ongoing disconnection call, just
+    // future ones.
+    // We guarantee no disconnection is ongoing by scheduling a cancel on the executor thread and
+    // waiting for it. The executor thread must be single threaded.
+    ScheduledFuture<?> automaticDisconnectionCancelled =
+        scheduledExecutorService.schedule(this::cancelAutomaticDisconnection, 1, MILLISECONDS);
+    try {
+      automaticDisconnectionCancelled.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new UnavailableProfileException(
+          "Interrupted waiting for automatic disconnection to be cancelled", e);
+    }
 
     scheduledExecutorService.execute(
         () -> {
