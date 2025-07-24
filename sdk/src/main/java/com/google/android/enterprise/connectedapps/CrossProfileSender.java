@@ -381,13 +381,14 @@ public final class CrossProfileSender {
   }
 
   void manuallyBind(Object connectionHolder) throws UnavailableProfileException {
-    Log.e(LOG_TAG, "Calling manuallyBind");
+    Log.i(LOG_TAG, "Calling manuallyBind");
     if (isRunningOnUIThread()) {
       throw new IllegalStateException("connect()/manuallyBind() cannot be called from UI thread");
     }
 
     if (!isBindingPossible()) {
-      throw new UnavailableProfileException("Profile not available");
+      throw new UnavailableProfileException(
+              "Profile not available, isBindingPossible() returned false in manuallyBind()");
     }
 
     if (!binder.hasPermissionToBind(context)) {
@@ -431,8 +432,17 @@ public final class CrossProfileSender {
     try {
       if (manuallyBindLatch != null) {
         try {
-          manuallyBindLatch.await(30, SECONDS);
+          long startTime = System.currentTimeMillis();
+          boolean success = manuallyBindLatch.await(30, SECONDS);
+          long elapsedMillis = System.currentTimeMillis() - startTime;
+          String elapsedTimeString = "elapsed time: " + elapsedMillis + " ms";
+          if (success) {
+            Log.v(LOG_TAG, "waiting for manuallyBind succeed, " + elapsedTimeString);
+          } else {
+            Log.e(LOG_TAG, "manuallyBind timeout, " + elapsedTimeString);
+          }
         } catch (NullPointerException e) {
+          Log.e(LOG_TAG, "NPE", e);
           // Ignore - avoiding race condition
         }
       }
@@ -443,7 +453,7 @@ public final class CrossProfileSender {
     if (!isBound()) {
       unbind();
       scheduledExecutorService.execute(() -> removeConnectionHolderAndAliases(connectionHolder));
-      throw new UnavailableProfileException("Profile not available");
+      throw new UnavailableProfileException("Profile not available, isBound() returned false");
     }
   }
 
@@ -683,7 +693,8 @@ public final class CrossProfileSender {
       LocalCallback callback,
       Object connectionHolderAlias) {
     if (!isBindingPossible()) {
-      throwUnavailableException(new UnavailableProfileException("Profile not available"));
+      throwUnavailableException(new UnavailableProfileException(
+              "Profile not available, isBindingPossible() returned false in callAsync()"));
     }
 
     scheduledExecutorService.execute(
