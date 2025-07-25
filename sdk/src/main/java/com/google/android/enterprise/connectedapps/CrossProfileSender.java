@@ -60,6 +60,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -335,10 +336,12 @@ public final class CrossProfileSender {
   }
 
   private void cancelAutomaticDisconnection() {
+    Log.v(LOG_TAG, "cancelAutomaticDisconnection() started");
     ScheduledFuture<?> disconnectionFuture = automaticDisconnectionFuture.getAndSet(null);
     if (disconnectionFuture != null) {
       disconnectionFuture.cancel(/* mayInterruptIfRunning= */ true);
     }
+    Log.v(LOG_TAG, "cancelAutomaticDisconnection() finished");
   }
 
   private void maybeScheduleAutomaticDisconnection() {
@@ -402,10 +405,12 @@ public final class CrossProfileSender {
     ScheduledFuture<?> automaticDisconnectionCancelled =
         scheduledExecutorService.schedule(this::cancelAutomaticDisconnection, 1, MILLISECONDS);
     try {
-      automaticDisconnectionCancelled.get();
+      automaticDisconnectionCancelled.get(30, SECONDS);
     } catch (InterruptedException | ExecutionException e) {
       throw new UnavailableProfileException(
-          "Interrupted waiting for automatic disconnection to be cancelled", e);
+              "Interrupted waiting for automatic disconnection to be cancelled", e);
+    } catch (TimeoutException e) {
+      throw new UnavailableProfileException("Timeout waiting for automatic disconnection", e);
     }
 
     scheduledExecutorService.execute(
