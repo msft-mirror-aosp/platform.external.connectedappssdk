@@ -60,6 +60,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -335,10 +336,12 @@ public final class CrossProfileSender {
   }
 
   private void cancelAutomaticDisconnection() {
+    Log.v(LOG_TAG, "cancelAutomaticDisconnection() started");
     ScheduledFuture<?> disconnectionFuture = automaticDisconnectionFuture.getAndSet(null);
     if (disconnectionFuture != null) {
       disconnectionFuture.cancel(/* mayInterruptIfRunning= */ true);
     }
+    Log.v(LOG_TAG, "cancelAutomaticDisconnection() finished");
   }
 
   private void maybeScheduleAutomaticDisconnection() {
@@ -381,13 +384,14 @@ public final class CrossProfileSender {
   }
 
   void manuallyBind(Object connectionHolder) throws UnavailableProfileException {
-    Log.e(LOG_TAG, "Calling manuallyBind");
+    Log.i(LOG_TAG, "Calling manuallyBind");
     if (isRunningOnUIThread()) {
       throw new IllegalStateException("connect()/manuallyBind() cannot be called from UI thread");
     }
 
     if (!isBindingPossible()) {
-      throw new UnavailableProfileException("Profile not available");
+      throw new UnavailableProfileException(
+              "Profile not available, isBindingPossible() returned false in manuallyBind()");
     }
 
     if (!binder.hasPermissionToBind(context)) {
@@ -401,10 +405,12 @@ public final class CrossProfileSender {
     ScheduledFuture<?> automaticDisconnectionCancelled =
         scheduledExecutorService.schedule(this::cancelAutomaticDisconnection, 1, MILLISECONDS);
     try {
-      automaticDisconnectionCancelled.get();
+      automaticDisconnectionCancelled.get(30, SECONDS);
     } catch (InterruptedException | ExecutionException e) {
       throw new UnavailableProfileException(
-          "Interrupted waiting for automatic disconnection to be cancelled", e);
+              "Interrupted waiting for automatic disconnection to be cancelled", e);
+    } catch (TimeoutException e) {
+      throw new UnavailableProfileException("Timeout waiting for automatic disconnection", e);
     }
 
     scheduledExecutorService.execute(
@@ -431,8 +437,17 @@ public final class CrossProfileSender {
     try {
       if (manuallyBindLatch != null) {
         try {
-          manuallyBindLatch.await(30, SECONDS);
+          long startTime = System.currentTimeMillis();
+          boolean success = manuallyBindLatch.await(30, SECONDS);
+          long elapsedMillis = System.currentTimeMillis() - startTime;
+          String elapsedTimeString = "elapsed time: " + elapsedMillis + " ms";
+          if (success) {
+            Log.v(LOG_TAG, "waiting for manuallyBind succeed, " + elapsedTimeString);
+          } else {
+            Log.e(LOG_TAG, "manuallyBind timeout, " + elapsedTimeString);
+          }
         } catch (NullPointerException e) {
+          Log.e(LOG_TAG, "NPE", e);
           // Ignore - avoiding race condition
         }
       }
@@ -443,7 +458,7 @@ public final class CrossProfileSender {
     if (!isBound()) {
       unbind();
       scheduledExecutorService.execute(() -> removeConnectionHolderAndAliases(connectionHolder));
-      throw new UnavailableProfileException("Profile not available");
+      throw new UnavailableProfileException("Profile not available, isBound() returned false");
     }
   }
 
@@ -683,7 +698,8 @@ public final class CrossProfileSender {
       LocalCallback callback,
       Object connectionHolderAlias) {
     if (!isBindingPossible()) {
-      throwUnavailableException(new UnavailableProfileException("Profile not available"));
+      throwUnavailableException(new UnavailableProfileException(
+              "Profile not available, isBindingPossible() returned false in callAsync()"));
     }
 
     scheduledExecutorService.execute(
