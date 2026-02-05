@@ -305,6 +305,11 @@ final class BundlerGenerator {
     codeBuilder.beginControlFlow(
         "if ($S.equals(valueType.rawTypeQualifiedName()))", "java.lang.Void");
     codeBuilder.addStatement("return");
+
+    codeBuilder.nextControlFlow("if (value == null)");
+    codeBuilder.addStatement("// Do not store null");
+    codeBuilder.addStatement("return");
+
     for (Type type : types) {
       codeBuilder.nextControlFlow(
           "else if ($S.equals(valueType.rawTypeQualifiedName()))",
@@ -367,6 +372,11 @@ final class BundlerGenerator {
     codeBuilder.beginControlFlow(
         "if ($S.equals(valueType.rawTypeQualifiedName()))", "java.lang.Void");
     codeBuilder.addStatement("return null");
+
+    codeBuilder.nextControlFlow("if (!bundle.containsKey(key))");
+    codeBuilder.addStatement("// Null values are not stored in the bundle");
+    codeBuilder.addStatement("return null");
+
     for (Type type : types) {
       codeBuilder.nextControlFlow(
           "else if ($S.equals(valueType.rawTypeQualifiedName()))",
